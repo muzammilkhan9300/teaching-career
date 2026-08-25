@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+
+@theme {
+  /* Brand palette, ported from the original static site's design tokens */
+  --color-navy: #0b1b45;
+  --color-navy-soft: #29365f;
+  --color-teal: #079b78;
+  --color-teal-dark: #068366;
+  --color-teal-deep: #056e55;
+  --color-mint: #e8f7f2;
+  --color-mint-2: #ddf1ea;
+  --color-badge: #d3eee4;
+  --color-body: #55606d;
+  --color-line: #d9ece4;
+
+  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --shadow-tc: 0 12px 30px -12px rgba(11, 27, 69, 0.18);
+  --shadow-tc-lg: 0 24px 48px -16px rgba(11, 27, 69, 0.22);
+
+  --container-tc: 1600px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-navy antialiased;
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    @apply bg-teal text-white;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .tc-container {
+    width: 100%;
+    max-width: var(--container-tc);
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .tc-container {
+      padding-inline: 2.5rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .tc-container {
+      padding-inline: 4rem;
+    }
+  }
+
+  .screen-reader-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+  }
+}
