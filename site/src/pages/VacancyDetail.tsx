@@ -1,14 +1,16 @@
 import { Helmet } from 'react-helmet-async'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { FormCard } from '@/components/ui/FormCard'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
-import { vacancies } from '@/data/vacancies'
-import { DEMO_STORAGE_KEYS, saveDemoRecord } from '@/lib/demoStorage'
+import { useVacancy } from '@/lib/queries'
+import { api } from '@/lib/api'
 import { CapIcon, ChevronRightIcon, ClockIcon, PinIcon } from '@/components/icons'
+import type { Vacancy } from '@/types'
 
-const DETAIL_ROWS: { label: string; key: keyof (typeof vacancies)[number] }[] = [
+const DETAIL_ROWS: { label: string; key: keyof Vacancy }[] = [
   { label: 'School', key: 'school' },
   { label: 'Subject', key: 'subject' },
   { label: 'Qualification', key: 'qualification' },
@@ -26,7 +28,26 @@ export default function VacancyDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const vacancy = vacancies.find((v) => v.id === id)
+  const { data: vacancy, isPending } = useVacancy(id)
+
+  const applyMutation = useMutation({
+    mutationFn: () => api.postJson(`/vacancies/${id}/apply`, {}),
+    onSuccess: () => {
+      showToast({ variant: 'success', title: 'Application sent', description: `You applied to ${vacancy?.title}.` })
+      navigate('/registration-success?type=application')
+    },
+    onError: () => {
+      showToast({ variant: 'error', title: 'Something went wrong', description: 'Please try applying again.' })
+    },
+  })
+
+  if (isPending) {
+    return (
+      <section className="tc-container flex min-h-[50vh] items-center justify-center py-24">
+        <span className="h-10 w-10 animate-spin rounded-full border-4 border-mint border-t-teal" aria-label="Loading" />
+      </section>
+    )
+  }
 
   if (!vacancy) {
     return (
@@ -41,19 +62,6 @@ export default function VacancyDetail() {
         </Button>
       </section>
     )
-  }
-
-  function handleApply() {
-    if (!vacancy) return
-    saveDemoRecord(DEMO_STORAGE_KEYS.vacancyApplications, {
-      vacancyId: vacancy.id,
-      vacancyTitle: vacancy.title,
-      schoolId: vacancy.schoolId,
-      applicationDate: new Date().toISOString(),
-      applicationStatus: 'Applied',
-    })
-    showToast({ variant: 'success', title: 'Application sent', description: `You applied to ${vacancy.title}.` })
-    navigate('/registration-success?type=application')
   }
 
   return (
@@ -107,11 +115,12 @@ export default function VacancyDetail() {
 
             <button
               type="button"
-              onClick={handleApply}
-              className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-teal px-8 py-3.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark"
+              onClick={() => applyMutation.mutate()}
+              disabled={applyMutation.isPending}
+              className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-teal px-8 py-3.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark disabled:opacity-60"
             >
               <CapIcon size={16} />
-              Apply for This Vacancy
+              {applyMutation.isPending ? 'Applying…' : 'Apply for This Vacancy'}
             </button>
           </FormCard>
         </div>

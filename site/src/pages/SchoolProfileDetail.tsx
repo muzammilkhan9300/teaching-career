@@ -3,13 +3,20 @@ import { Link, useParams } from 'react-router-dom'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { FormCard } from '@/components/ui/FormCard'
 import { Button } from '@/components/ui/Button'
-import { schools } from '@/data/schools'
-import { vacancies } from '@/data/vacancies'
+import { useSchool } from '@/lib/queries'
 import { CheckCircleIcon, ChevronRightIcon, PinIcon, ShieldIcon } from '@/components/icons'
 
 export default function SchoolProfileDetail() {
   const { id } = useParams<{ id: string }>()
-  const school = schools.find((s) => s.id === id)
+  const { data: school, isPending } = useSchool(id)
+
+  if (isPending) {
+    return (
+      <section className="tc-container flex min-h-[50vh] items-center justify-center py-24">
+        <span className="h-10 w-10 animate-spin rounded-full border-4 border-mint border-t-teal" aria-label="Loading" />
+      </section>
+    )
+  }
 
   if (!school) {
     return (
@@ -26,7 +33,7 @@ export default function SchoolProfileDetail() {
     )
   }
 
-  const activeVacancies = vacancies.filter((v) => v.schoolId === school.id && v.active)
+  const activeVacancies = school.activeVacancies
 
   return (
     <>

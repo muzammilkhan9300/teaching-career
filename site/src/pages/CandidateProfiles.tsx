@@ -1,46 +1,38 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
 import { CandidateCard } from '@/components/sections/CandidateCard'
 import { Pagination } from '@/components/ui/Pagination'
 import { CardSkeleton } from '@/components/ui/Skeleton'
-import { candidates } from '@/data/candidates'
+import { useCandidateFilterOptions, useCandidates } from '@/lib/queries'
 import { SearchIcon } from '@/components/icons'
 
 const PER_PAGE = 4
-
-const CITIES = ['All Cities', ...Array.from(new Set(candidates.map((c) => c.city)))]
-const TEACHING_TYPES = ['All Teaching Types', ...Array.from(new Set(candidates.map((c) => c.tags[0])))]
 
 export default function CandidateProfiles() {
   const [city, setCity] = useState('All Cities')
   const [teachingType, setTeachingType] = useState('All Teaching Types')
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setLoading(false), 350)
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300)
     return () => window.clearTimeout(timer)
-  }, [])
-
-  const filtered = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    return candidates.filter((c) => {
-      if (city !== 'All Cities' && c.city !== city) return false
-      if (teachingType !== 'All Teaching Types' && c.tags[0] !== teachingType) return false
-      if (query && !`${c.name} ${c.role} ${c.qualification}`.toLowerCase().includes(query)) return false
-      return true
-    })
-  }, [city, teachingType, search])
+  }, [search])
 
   useEffect(() => {
     setPage(1)
-  }, [city, teachingType, search])
+  }, [city, teachingType, debouncedSearch])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
-  const pageCandidates = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const filterOptions = useCandidateFilterOptions()
+  const candidatesQuery = useCandidates({ city, teachingType, search: debouncedSearch, page })
+
+  const cities = filterOptions.data?.cities ?? ['All Cities']
+  const teachingTypes = filterOptions.data?.teachingTypes ?? ['All Teaching Types']
+  const data = candidatesQuery.data
+  const isLoading = candidatesQuery.isPending
 
   return (
     <>
@@ -75,7 +67,7 @@ export default function CandidateProfiles() {
               onChange={(e) => setCity(e.target.value)}
               className="rounded-xl border border-line px-4 py-2.5 text-sm outline-none focus:border-teal focus:ring-2 focus:ring-teal/15"
             >
-              {CITIES.map((c) => (
+              {cities.map((c) => (
                 <option key={c} value={c}>
                   {c}
                 </option>
@@ -86,7 +78,7 @@ export default function CandidateProfiles() {
               onChange={(e) => setTeachingType(e.target.value)}
               className="rounded-xl border border-line px-4 py-2.5 text-sm outline-none focus:border-teal focus:ring-2 focus:ring-teal/15"
             >
-              {TEACHING_TYPES.map((t) => (
+              {teachingTypes.map((t) => (
                 <option key={t} value={t}>
                   {t}
                 </option>
@@ -94,15 +86,15 @@ export default function CandidateProfiles() {
             </select>
           </div>
 
-          {loading ? (
+          {isLoading ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: PER_PAGE }).map((_, i) => (
                 <CardSkeleton key={i} />
               ))}
             </div>
-          ) : pageCandidates.length > 0 ? (
+          ) : data && data.items.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {pageCandidates.map((candidate) => (
+              {data.items.map((candidate) => (
                 <CandidateCard key={candidate.id} candidate={candidate} />
               ))}
             </div>
@@ -112,7 +104,7 @@ export default function CandidateProfiles() {
             </p>
           )}
 
-          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+          <Pagination page={page} totalPages={data?.totalPages ?? 1} onChange={setPage} />
         </div>
       </section>
     </>

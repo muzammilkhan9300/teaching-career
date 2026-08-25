@@ -2,12 +2,13 @@ import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
 import { FormCard, FormSectionTitle } from '@/components/ui/FormCard'
 import { FileField, SelectField, TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
-import { DEMO_STORAGE_KEYS, saveDemoRecord } from '@/lib/demoStorage'
+import { api, ApiError } from '@/lib/api'
 import { schoolRegistrationSchema, type SchoolRegistrationInput } from '@/lib/validation'
 import { ShieldIcon } from '@/components/icons'
 
@@ -21,19 +22,36 @@ export default function SchoolRegistration() {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<SchoolRegistrationInput>({ resolver: zodResolver(schoolRegistrationSchema) })
 
   const schoolLogo = watch('schoolLogo')
 
+  const registerMutation = useMutation({
+    mutationFn: (data: SchoolRegistrationInput) => {
+      const formData = new FormData()
+      for (const [key, value] of Object.entries(data)) {
+        if (value === undefined || value === null) continue
+        if (value instanceof FileList) {
+          if (value[0]) formData.set(key, value[0])
+        } else {
+          formData.set(key, String(value))
+        }
+      }
+      return api.postForm('/school-registrations', formData)
+    },
+    onSuccess: () => {
+      showToast({ variant: 'success', title: 'Registration submitted', description: 'Thank you for registering your school.' })
+      navigate('/registration-success?type=school')
+    },
+    onError: (error) => {
+      const message = error instanceof ApiError ? error.message : 'Please check your details and try again.'
+      showToast({ variant: 'error', title: 'Registration failed', description: message })
+    },
+  })
+
   function onSubmit(data: SchoolRegistrationInput) {
-    saveDemoRecord(DEMO_STORAGE_KEYS.schoolRegistrations, {
-      ...data,
-      schoolLogo: data.schoolLogo?.[0]?.name ?? '',
-      registrationStatus: 'New',
-    })
-    showToast({ variant: 'success', title: 'Registration submitted', description: 'Thank you for registering your school.' })
-    navigate('/registration-success?type=school')
+    registerMutation.mutate(data)
   }
 
   return (
@@ -108,11 +126,11 @@ export default function SchoolRegistration() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={registerMutation.isPending}
                 className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-teal px-8 py-3.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark disabled:opacity-60"
               >
                 <ShieldIcon size={16} />
-                {isSubmitting ? 'Submitting…' : 'Register School'}
+                {registerMutation.isPending ? 'Submitting…' : 'Register School'}
               </button>
             </form>
           </FormCard>

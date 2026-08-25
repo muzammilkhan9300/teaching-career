@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
+import { useMutation } from '@tanstack/react-query'
 import {
   FacebookIcon,
   InstagramIcon,
@@ -13,7 +14,7 @@ import {
 } from '@/components/icons'
 import { TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
-import { DEMO_STORAGE_KEYS, saveDemoRecord } from '@/lib/demoStorage'
+import { api, ApiError } from '@/lib/api'
 import { contactMessageSchema, type ContactMessageInput } from '@/lib/validation'
 
 const QUICK_LINKS = [
@@ -40,17 +41,27 @@ export function Footer() {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<ContactMessageInput>({ resolver: zodResolver(contactMessageSchema) })
 
+  const sendMutation = useMutation({
+    mutationFn: (data: ContactMessageInput) => api.postJson('/contact-messages', data),
+    onSuccess: () => {
+      showToast({
+        variant: 'success',
+        title: 'Message received',
+        description: 'Thank you — we will get back to you soon.',
+      })
+      reset()
+    },
+    onError: (error) => {
+      const message = error instanceof ApiError ? error.message : 'Please try sending your message again.'
+      showToast({ variant: 'error', title: 'Message not sent', description: message })
+    },
+  })
+
   function onSubmit(data: ContactMessageInput) {
-    saveDemoRecord(DEMO_STORAGE_KEYS.contactMessages, data)
-    showToast({
-      variant: 'success',
-      title: 'Message received',
-      description: 'Thank you — we will get back to you soon.',
-    })
-    reset()
+    sendMutation.mutate(data)
   }
 
   return (
@@ -157,7 +168,7 @@ export function Footer() {
             />
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={sendMutation.isPending}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-teal px-6 py-3 text-sm font-bold text-white transition hover:bg-teal-dark disabled:opacity-60"
             >
               <SendIcon size={15} />

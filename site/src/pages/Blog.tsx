@@ -2,9 +2,12 @@ import { Helmet } from 'react-helmet-async'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
 import { BlogCard } from '@/components/sections/BlogCard'
-import { blogPosts } from '@/data/blogPosts'
+import { CardSkeleton } from '@/components/ui/Skeleton'
+import { useBlogPosts } from '@/lib/queries'
 
 export default function Blog() {
+  const { data: blogPosts, isPending } = useBlogPosts()
+
   return (
     <>
       <Helmet>
@@ -22,9 +25,9 @@ export default function Blog() {
 
       <section className="py-16">
         <div className="tc-container grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post) => (
-            <BlogCard key={post.slug} post={post} />
-          ))}
+          {isPending
+            ? Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)
+            : blogPosts?.map((post) => <BlogCard key={post.slug} post={post} />)}
         </div>
       </section>
     </>

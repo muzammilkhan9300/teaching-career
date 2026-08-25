@@ -3,12 +3,20 @@ import { useParams } from 'react-router-dom'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { FormCard } from '@/components/ui/FormCard'
 import { Button } from '@/components/ui/Button'
-import { blogPosts } from '@/data/blogPosts'
+import { useBlogPost } from '@/lib/queries'
 import { ChevronRightIcon } from '@/components/icons'
 
 export default function BlogSingle() {
   const { slug } = useParams<{ slug: string }>()
-  const post = blogPosts.find((p) => p.slug === slug)
+  const { data: post, isPending } = useBlogPost(slug)
+
+  if (isPending) {
+    return (
+      <section className="tc-container flex min-h-[50vh] items-center justify-center py-24">
+        <span className="h-10 w-10 animate-spin rounded-full border-4 border-mint border-t-teal" aria-label="Loading" />
+      </section>
+    )
+  }
 
   if (!post) {
     return (

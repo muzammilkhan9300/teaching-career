@@ -1,0 +1,13 @@
+{
+  "name": "teachingcareer",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev --prefix server\" \"npm:dev --prefix site\"",
+    "seed": "npm run seed --prefix server",
+    "build": "npm run build --prefix server && npm run build --prefix site"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}

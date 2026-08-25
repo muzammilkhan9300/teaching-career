@@ -3,12 +3,20 @@ import { useParams } from 'react-router-dom'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { FormCard } from '@/components/ui/FormCard'
 import { Button } from '@/components/ui/Button'
-import { candidates } from '@/data/candidates'
+import { useCandidate } from '@/lib/queries'
 import { CapIcon, CheckCircleIcon, ChevronRightIcon, ClockIcon, LockIcon, PersonIcon, PinIcon } from '@/components/icons'
 
 export default function CandidateProfileDetail() {
   const { id } = useParams<{ id: string }>()
-  const candidate = candidates.find((c) => c.id === id)
+  const { data: candidate, isPending } = useCandidate(id)
+
+  if (isPending) {
+    return (
+      <section className="tc-container flex min-h-[50vh] items-center justify-center py-24">
+        <span className="h-10 w-10 animate-spin rounded-full border-4 border-mint border-t-teal" aria-label="Loading" />
+      </section>
+    )
+  }
 
   if (!candidate) {
     return (

@@ -2,12 +2,13 @@ import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
 import { FormCard, FormSectionTitle } from '@/components/ui/FormCard'
 import { SelectField, TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
-import { DEMO_STORAGE_KEYS, saveDemoRecord } from '@/lib/demoStorage'
+import { api, ApiError } from '@/lib/api'
 import { homeTutorSchema, type HomeTutorInput } from '@/lib/validation'
 import { PhoneIcon, PinIcon, ShieldIcon, WhatsappIcon } from '@/components/icons'
 
@@ -20,13 +21,23 @@ export default function HomeTutor() {
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<HomeTutorInput>({ resolver: zodResolver(homeTutorSchema) })
 
+  const requestMutation = useMutation({
+    mutationFn: (data: HomeTutorInput) => api.postJson('/home-tutor-requests', data),
+    onSuccess: () => {
+      showToast({ variant: 'success', title: 'Request submitted', description: 'Thank you for your request.' })
+      navigate('/registration-success?type=home-tutor')
+    },
+    onError: (error) => {
+      const message = error instanceof ApiError ? error.message : 'Please check your details and try again.'
+      showToast({ variant: 'error', title: 'Request failed', description: message })
+    },
+  })
+
   function onSubmit(data: HomeTutorInput) {
-    saveDemoRecord(DEMO_STORAGE_KEYS.homeTutorRequests, { ...data, requestStatus: 'New' })
-    showToast({ variant: 'success', title: 'Request submitted', description: 'Thank you for your request.' })
-    navigate('/registration-success?type=home-tutor')
+    requestMutation.mutate(data)
   }
 
   return (
@@ -139,11 +150,11 @@ export default function HomeTutor() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={requestMutation.isPending}
                 className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-teal px-8 py-3.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark disabled:opacity-60"
               >
                 <PinIcon size={16} />
-                {isSubmitting ? 'Submitting…' : 'Request a Home Tutor'}
+                {requestMutation.isPending ? 'Submitting…' : 'Request a Home Tutor'}
               </button>
             </form>
           </FormCard>

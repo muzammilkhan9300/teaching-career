@@ -52,9 +52,15 @@ export interface BlogPost {
   body: string[]
 }
 
-export type SuccessType = 'candidate' | 'school' | 'home-tutor' | 'application'
-
-export interface DemoRecord {
-  submittedAt: string
-  [key: string]: unknown
+export interface SchoolDetail extends School {
+  activeVacancies: Vacancy[]
 }
+
+export interface CandidatesPage {
+  items: Candidate[]
+  total: number
+  page: number
+  totalPages: number
+}
+
+export type SuccessType = 'candidate' | 'school' | 'home-tutor' | 'application'

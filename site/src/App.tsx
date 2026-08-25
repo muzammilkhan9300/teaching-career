@@ -1,8 +1,13 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RootLayout } from '@/layouts/RootLayout'
 import { ToastProvider } from '@/components/ui/Toast'
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
+})
 
 const Home = lazy(() => import('@/pages/Home'))
 const About = lazy(() => import('@/pages/About'))
@@ -31,33 +36,35 @@ function PageFallback() {
 
 export default function App() {
   return (
-    <HelmetProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <Suspense fallback={<PageFallback />}>
-            <Routes>
-              <Route element={<RootLayout />}>
-                <Route index element={<Home />} />
-                <Route path="about" element={<About />} />
-                <Route path="services" element={<Services />} />
-                <Route path="contact" element={<Contact />} />
-                <Route path="home-tutor" element={<HomeTutor />} />
-                <Route path="candidate-registration" element={<CandidateRegistration />} />
-                <Route path="school-registration" element={<SchoolRegistration />} />
-                <Route path="candidate-profiles" element={<CandidateProfiles />} />
-                <Route path="candidate-profiles/:id" element={<CandidateProfileDetail />} />
-                <Route path="school-profiles" element={<SchoolProfiles />} />
-                <Route path="school-profiles/:id" element={<SchoolProfileDetail />} />
-                <Route path="vacancy/:id" element={<VacancyDetail />} />
-                <Route path="blog" element={<Blog />} />
-                <Route path="blog/:slug" element={<BlogSingle />} />
-                <Route path="registration-success" element={<RegistrationSuccess />} />
-                <Route path="*" element={<NotFound />} />
-              </Route>
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </ToastProvider>
-    </HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <HelmetProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <Suspense fallback={<PageFallback />}>
+              <Routes>
+                <Route element={<RootLayout />}>
+                  <Route index element={<Home />} />
+                  <Route path="about" element={<About />} />
+                  <Route path="services" element={<Services />} />
+                  <Route path="contact" element={<Contact />} />
+                  <Route path="home-tutor" element={<HomeTutor />} />
+                  <Route path="candidate-registration" element={<CandidateRegistration />} />
+                  <Route path="school-registration" element={<SchoolRegistration />} />
+                  <Route path="candidate-profiles" element={<CandidateProfiles />} />
+                  <Route path="candidate-profiles/:id" element={<CandidateProfileDetail />} />
+                  <Route path="school-profiles" element={<SchoolProfiles />} />
+                  <Route path="school-profiles/:id" element={<SchoolProfileDetail />} />
+                  <Route path="vacancy/:id" element={<VacancyDetail />} />
+                  <Route path="blog" element={<Blog />} />
+                  <Route path="blog/:slug" element={<BlogSingle />} />
+                  <Route path="registration-success" element={<RegistrationSuccess />} />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </ToastProvider>
+      </HelmetProvider>
+    </QueryClientProvider>
   )
 }

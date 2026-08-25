@@ -2,12 +2,13 @@ import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation } from '@tanstack/react-query'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
 import { FormCard, FormSectionTitle } from '@/components/ui/FormCard'
 import { ChoiceChip, ChoiceChipGroup, FileField, SelectField, TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
-import { DEMO_STORAGE_KEYS, saveDemoRecord } from '@/lib/demoStorage'
+import { api, ApiError } from '@/lib/api'
 import { candidateRegistrationSchema, type CandidateRegistrationInput } from '@/lib/validation'
 import { CapIcon, InfoIcon, LockIcon, PersonIcon } from '@/components/icons'
 
@@ -43,7 +44,7 @@ export default function CandidateRegistration() {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<CandidateRegistrationInput>({
     resolver: zodResolver(candidateRegistrationSchema),
     defaultValues: { isFresher: 'yes', teachWhere: [], subjects: [], classes: [] },
@@ -58,20 +59,35 @@ export default function CandidateRegistration() {
   const experienceDocument = watch('experienceDocument')
   const policeVerification = watch('policeVerification')
 
+  const registerMutation = useMutation({
+    mutationFn: (data: CandidateRegistrationInput) => {
+      const formData = new FormData()
+      for (const [key, value] of Object.entries(data)) {
+        if (value === undefined || value === null) continue
+        if (key === 'declaration') {
+          formData.set(key, String(value))
+        } else if (Array.isArray(value)) {
+          formData.set(key, JSON.stringify(value))
+        } else if (value instanceof FileList) {
+          if (value[0]) formData.set(key, value[0])
+        } else {
+          formData.set(key, String(value))
+        }
+      }
+      return api.postForm(`/candidate-registrations`, formData)
+    },
+    onSuccess: () => {
+      showToast({ variant: 'success', title: 'Registration submitted', description: 'Thank you for registering as a candidate.' })
+      navigate('/registration-success?type=candidate')
+    },
+    onError: (error) => {
+      const message = error instanceof ApiError ? error.message : 'Please check your details and try again.'
+      showToast({ variant: 'error', title: 'Registration failed', description: message })
+    },
+  })
+
   function onSubmit(data: CandidateRegistrationInput) {
-    const homeTuitionSelected = data.teachWhere.includes('home_tuition')
-    saveDemoRecord(DEMO_STORAGE_KEYS.candidateApplications, {
-      ...data,
-      profilePhoto: data.profilePhoto?.[0]?.name ?? '',
-      degreeDocument: data.degreeDocument?.[0]?.name ?? '',
-      experienceDocument: data.experienceDocument?.[0]?.name ?? '',
-      policeVerification: data.policeVerification?.[0]?.name ?? '',
-      homeTuitionEligibility: homeTuitionSelected ? 'Pending' : 'Not Requested',
-      policeVerificationStatus: homeTuitionSelected ? 'Pending' : 'Not Required',
-      applicationStatus: 'New',
-    })
-    showToast({ variant: 'success', title: 'Registration submitted', description: 'Thank you for registering as a candidate.' })
-    navigate('/registration-success?type=candidate')
+    registerMutation.mutate(data)
   }
 
   return (
@@ -272,11 +288,11 @@ export default function CandidateRegistration() {
               <div className="flex flex-col items-start gap-3">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={registerMutation.isPending}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-teal px-8 py-3.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark disabled:opacity-60"
                 >
                   <CapIcon size={16} />
-                  {isSubmitting ? 'Submitting…' : 'Register as a Candidate'}
+                  {registerMutation.isPending ? 'Submitting…' : 'Register as a Candidate'}
                 </button>
                 <p className="flex items-center gap-1.5 text-xs text-body">
                   <LockIcon size={12} />

@@ -53,7 +53,9 @@ export const candidateRegistrationSchema = z
     subjectOther: z.string().optional(),
     classes: z.array(z.string()).optional(),
     classOther: z.string().optional(),
-    availability: z.string().optional(),
+    // A radio group with nothing checked submits `null` (not `undefined`) via
+    // react-hook-form — .nullish() accepts both since this field is optional.
+    availability: z.string().nullish(),
     preferredTime: z.string().optional(),
     declaration: z.boolean().refine((v) => v === true, 'Please confirm the declaration to continue.'),
   })
