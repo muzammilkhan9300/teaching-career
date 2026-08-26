@@ -26,9 +26,11 @@ adminStatsRouter.get(
       homeTutorRequests,
       contactMessages,
       vacancyApplications,
+      pendingVerifications,
+      pendingApprovals,
     ] = await Promise.all([
-      Vacancy.countDocuments(),
-      Vacancy.countDocuments({ active: true }),
+      Vacancy.countDocuments({ archived: false }),
+      Vacancy.countDocuments({ active: true, archived: false }),
       School.countDocuments(),
       Candidate.countDocuments(),
       CandidateApplication.countDocuments(),
@@ -36,6 +38,8 @@ adminStatsRouter.get(
       HomeTutorRequest.countDocuments(),
       ContactMessage.countDocuments(),
       VacancyApplication.countDocuments(),
+      CandidateApplication.countDocuments({ applicationStatus: { $in: ['New', 'Reviewed'] } }),
+      SchoolRegistration.countDocuments({ registrationStatus: { $in: ['New', 'Reviewed'] } }),
     ])
 
     res.json({
@@ -48,6 +52,8 @@ adminStatsRouter.get(
       homeTutorRequests,
       contactMessages,
       vacancyApplications,
+      pendingVerifications,
+      pendingApprovals,
     })
   }),
 )

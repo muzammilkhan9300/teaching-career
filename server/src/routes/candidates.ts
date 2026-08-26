@@ -10,7 +10,7 @@ const DEFAULT_PAGE_SIZE = 4
 candidatesRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    const filter: Record<string, unknown> = {}
+    const filter: Record<string, unknown> = { status: 'Active' }
 
     const city = typeof req.query.city === 'string' ? req.query.city : undefined
     if (city && city !== 'All Cities') filter.city = city
@@ -43,8 +43,8 @@ candidatesRouter.get(
   '/filters',
   asyncHandler(async (_req, res) => {
     const [cities, teachingTypes] = await Promise.all([
-      Candidate.distinct('city'),
-      Candidate.distinct('tags.0'),
+      Candidate.distinct('city', { status: 'Active' }),
+      Candidate.distinct('tags.0', { status: 'Active' }),
     ])
     res.json({
       cities: ['All Cities', ...cities.sort()],
@@ -56,7 +56,7 @@ candidatesRouter.get(
 candidatesRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    const candidate = await Candidate.findById(req.params.id)
+    const candidate = await Candidate.findOne({ _id: req.params.id, status: 'Active' })
     if (!candidate) throw new NotFoundError('Candidate not found')
     res.json(candidate)
   }),

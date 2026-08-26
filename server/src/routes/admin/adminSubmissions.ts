@@ -5,8 +5,8 @@ import { ContactMessage } from '../../models/ContactMessage.js'
 import { VacancyApplication } from '../../models/VacancyApplication.js'
 import { createAdminSubmissionRouter } from './createAdminSubmissionRouter.js'
 
-export const adminCandidateApplicationsRouter = createAdminSubmissionRouter(CandidateApplication, 'applicationStatus')
-export const adminSchoolRegistrationsRouter = createAdminSubmissionRouter(SchoolRegistration, 'registrationStatus')
-export const adminHomeTutorRequestsRouter = createAdminSubmissionRouter(HomeTutorRequest, 'requestStatus')
-export const adminContactMessagesRouter = createAdminSubmissionRouter(ContactMessage, 'status')
-export const adminVacancyApplicationsRouter = createAdminSubmissionRouter(VacancyApplication, 'applicationStatus')
+export const adminCandidateApplicationsRouter = createAdminSubmissionRouter(CandidateApplication, 'applicationStatus', 'CandidateApplication')
+export const adminSchoolRegistrationsRouter = createAdminSubmissionRouter(SchoolRegistration, 'registrationStatus', 'SchoolRegistration')
+export const adminHomeTutorRequestsRouter = createAdminSubmissionRouter(HomeTutorRequest, 'requestStatus', 'HomeTutorRequest')
+export const adminContactMessagesRouter = createAdminSubmissionRouter(ContactMessage, 'status', 'ContactMessage')
+export const adminVacancyApplicationsRouter = createAdminSubmissionRouter(VacancyApplication, 'applicationStatus', 'VacancyApplication')

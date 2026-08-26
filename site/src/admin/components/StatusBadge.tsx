@@ -8,6 +8,13 @@ const STATUS_STYLES: Record<string, string> = {
   Rejected: 'bg-red-50 text-red-600',
   Applied: 'bg-badge text-teal-deep',
   Pending: 'bg-amber-50 text-amber-700',
+  Active: 'bg-mint text-teal-deep',
+  Suspended: 'bg-red-50 text-red-600',
+  Verified: 'bg-mint text-teal-deep',
+  Published: 'bg-mint text-teal-deep',
+  Draft: 'bg-amber-50 text-amber-700',
+  Archived: 'bg-slate-100 text-slate-600',
+  Closed: 'bg-slate-100 text-slate-600',
 }
 
 export function StatusBadge({ status }: { status: string }) {

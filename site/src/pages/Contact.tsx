@@ -8,11 +8,18 @@ import { FormCard } from '@/components/ui/FormCard'
 import { TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
 import { api, ApiError } from '@/lib/api'
+import { useSettings } from '@/lib/queries'
 import { contactMessageSchema, type ContactMessageInput } from '@/lib/validation'
 import { MailIcon, PhoneIcon, SendIcon, WhatsappIcon } from '@/components/icons'
 
+const FALLBACK = { phone: '0312 8423676', phoneSecondary: '0300 0243546', whatsapp: '923128423676' }
+
 export default function Contact() {
   const { showToast } = useToast()
+  const { data: settings } = useSettings()
+  const phone = settings?.phone ?? FALLBACK.phone
+  const phoneSecondary = settings?.phoneSecondary ?? FALLBACK.phoneSecondary
+  const whatsapp = settings?.whatsapp ?? FALLBACK.whatsapp
   const {
     register,
     handleSubmit,
@@ -55,18 +62,18 @@ export default function Contact() {
         text="Whether you're a school, a candidate, or a parent — reach out and our team will get back to you."
       >
         <div className="mt-4 flex flex-wrap items-center justify-center gap-4 rounded-2xl border border-line bg-white px-6 py-4 shadow-tc">
-          <a href="tel:03128423676" className="flex items-center gap-2 text-sm font-bold text-navy hover:text-teal">
+          <a href={`tel:${phone.replace(/\s+/g, '')}`} className="flex items-center gap-2 text-sm font-bold text-navy hover:text-teal">
             <PhoneIcon size={15} className="text-teal-deep" />
-            0312 8423676
+            {phone}
           </a>
           <span className="hidden h-5 w-px bg-line sm:block" aria-hidden="true" />
-          <a href="tel:03000243546" className="flex items-center gap-2 text-sm font-bold text-navy hover:text-teal">
+          <a href={`tel:${phoneSecondary.replace(/\s+/g, '')}`} className="flex items-center gap-2 text-sm font-bold text-navy hover:text-teal">
             <PhoneIcon size={15} className="text-teal-deep" />
-            0300 0243546
+            {phoneSecondary}
           </a>
           <span className="hidden h-5 w-px bg-line sm:block" aria-hidden="true" />
           <a
-            href="https://wa.me/923128423676"
+            href={`https://wa.me/${whatsapp}`}
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-2 rounded-full bg-teal px-4 py-2 text-sm font-bold text-white hover:bg-teal-dark"

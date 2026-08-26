@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react'
+import { ChevronRightIcon } from '@/components/icons'
 
 export interface Column<T> {
   key: string
   label: string
   render?: (row: T) => ReactNode
   className?: string
+  sortable?: boolean
 }
 
 interface DataTableProps<T> {
@@ -13,9 +15,21 @@ interface DataTableProps<T> {
   rowKey: (row: T) => string
   actions?: (row: T) => ReactNode
   emptyMessage?: string
+  sortKey?: string
+  sortDir?: 'asc' | 'desc'
+  onSort?: (key: string) => void
 }
 
-export function DataTable<T>({ columns, rows, rowKey, actions, emptyMessage = 'No records yet.' }: DataTableProps<T>) {
+export function DataTable<T>({
+  columns,
+  rows,
+  rowKey,
+  actions,
+  emptyMessage = 'No records yet.',
+  sortKey,
+  sortDir,
+  onSort,
+}: DataTableProps<T>) {
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-tc">
       <div className="overflow-x-auto">
@@ -24,7 +38,27 @@ export function DataTable<T>({ columns, rows, rowKey, actions, emptyMessage = 'N
             <tr className="border-b border-line bg-mint/40">
               {columns.map((col) => (
                 <th key={col.key} className={`whitespace-nowrap px-4 py-3 font-bold text-navy ${col.className ?? ''}`}>
-                  {col.label}
+                  {col.sortable && onSort ? (
+                    <button
+                      type="button"
+                      onClick={() => onSort(col.key)}
+                      className="flex items-center gap-1 hover:text-teal-deep"
+                    >
+                      {col.label}
+                      <ChevronRightIcon
+                        size={13}
+                        className={
+                          sortKey === col.key
+                            ? sortDir === 'asc'
+                              ? '-rotate-90 text-teal-deep'
+                              : 'rotate-90 text-teal-deep'
+                            : 'rotate-90 text-body/40'
+                        }
+                      />
+                    </button>
+                  ) : (
+                    col.label
+                  )}
                 </th>
               ))}
               {actions ? <th className="px-4 py-3 text-right font-bold text-navy">Actions</th> : null}

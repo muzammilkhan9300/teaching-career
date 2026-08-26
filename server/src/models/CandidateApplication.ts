@@ -27,8 +27,13 @@ const candidateApplicationSchema = new Schema(
     preferredTime: { type: String },
     declaration: { type: Boolean, required: true },
 
+    // Presence of degreeDocumentPath is enforced at submission time in
+    // routes/candidateRegistrations.ts, not here — all three document paths
+    // are cleared once an admin verifies or rejects the application (see
+    // routes/admin/adminCandidateVerification.ts), so none can be `required`
+    // at the schema level.
     profilePhotoPath: { type: String },
-    degreeDocumentPath: { type: String, required: true },
+    degreeDocumentPath: { type: String },
     experienceDocumentPath: { type: String },
     policeVerificationPath: { type: String },
 

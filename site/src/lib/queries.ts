@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { api } from './api'
-import type { BlogPost, Candidate, CandidatesPage, School, SchoolDetail, Vacancy } from '@/types'
+import type { BlogPost, Candidate, CandidatesPage, School, SchoolDetail, Service, Settings, Vacancy } from '@/types'
 
 export function useVacancies() {
   return useQuery({ queryKey: ['vacancies'], queryFn: () => api.get<Vacancy[]>('/vacancies') })
@@ -75,5 +75,17 @@ export function useBlogPost(slug: string | undefined) {
     queryFn: () => api.get<BlogPost>(`/blog-posts/${slug}`),
     enabled: Boolean(slug),
     retry: false,
+  })
+}
+
+export function useServices() {
+  return useQuery({ queryKey: ['services'], queryFn: () => api.get<Service[]>('/services') })
+}
+
+export function useSettings() {
+  return useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.get<Settings>('/settings'),
+    staleTime: 5 * 60 * 1000,
   })
 }

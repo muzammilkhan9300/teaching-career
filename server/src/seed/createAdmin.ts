@@ -17,13 +17,15 @@ async function main() {
   await connectDb()
 
   const passwordHash = await hashPassword(password)
+  // The bootstrap account is always a super_admin — otherwise nobody could
+  // ever create further staff accounts (that action itself requires one).
   const admin = await Admin.findOneAndUpdate(
     { email: email.toLowerCase() },
-    { email: email.toLowerCase(), passwordHash, name },
+    { email: email.toLowerCase(), passwordHash, name, role: 'super_admin', active: true },
     { upsert: true, new: true, setDefaultsOnInsert: true },
   )
 
-  console.log(`[create-admin] admin account ready: ${admin.email}`)
+  console.log(`[create-admin] super_admin account ready: ${admin.email}`)
   await mongoose.disconnect()
 }
 

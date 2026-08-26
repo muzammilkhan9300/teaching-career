@@ -4,6 +4,7 @@ import { asyncHandler } from '../middleware/asyncHandler.js'
 import { writeLimiter } from '../middleware/rateLimiter.js'
 import { upload, uploadedFileUrl } from '../middleware/upload.js'
 import { schoolRegistrationBodySchema } from '../validation/schoolRegistration.js'
+import { notify } from '../lib/notify.js'
 
 export const schoolRegistrationsRouter = Router()
 
@@ -23,6 +24,7 @@ schoolRegistrationsRouter.post(
       registrationStatus: 'New',
     })
 
+    notify('school-registration', `New school registration from ${registration.schoolName}`, '/admin/school-registrations')
     res.status(201).json(registration)
   }),
 )

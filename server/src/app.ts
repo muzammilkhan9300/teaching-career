@@ -18,7 +18,14 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }))
   app.use(cookieParser())
 
-  app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')))
+  // Only low-sensitivity images are publicly servable. Candidate/school
+  // verification documents live in uploads/documents and are intentionally
+  // NOT mounted here — they're only reachable through the authenticated
+  // routes in routes/admin/adminDocuments.ts, and are deleted once a
+  // candidate application is verified or rejected.
+  const uploadsRoot = path.resolve(process.cwd(), 'uploads')
+  app.use('/uploads/photos', express.static(path.join(uploadsRoot, 'photos')))
+  app.use('/uploads/logos', express.static(path.join(uploadsRoot, 'logos')))
   app.use('/api', apiRouter)
 
   app.use(notFoundHandler)

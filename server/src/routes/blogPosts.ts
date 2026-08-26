@@ -8,7 +8,7 @@ export const blogPostsRouter = Router()
 blogPostsRouter.get(
   '/',
   asyncHandler(async (_req, res) => {
-    const posts = await BlogPost.find().sort({ date: -1 })
+    const posts = await BlogPost.find({ status: 'Published' }).sort({ date: -1 })
     res.json(posts)
   }),
 )
@@ -16,7 +16,7 @@ blogPostsRouter.get(
 blogPostsRouter.get(
   '/:slug',
   asyncHandler(async (req, res) => {
-    const post = await BlogPost.findOne({ slug: req.params.slug })
+    const post = await BlogPost.findOne({ slug: req.params.slug, status: 'Published' })
     if (!post) throw new NotFoundError('Article not found')
     res.json(post)
   }),

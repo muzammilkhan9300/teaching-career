@@ -4,6 +4,7 @@ import { School } from '../models/School.js'
 import { Vacancy } from '../models/Vacancy.js'
 import { Candidate } from '../models/Candidate.js'
 import { BlogPost } from '../models/BlogPost.js'
+import { Service } from '../models/Service.js'
 
 const schoolsSeed = [
   {
@@ -332,6 +333,45 @@ const blogPostsSeed = [
   },
 ]
 
+const servicesSeed = [
+  {
+    title: 'Teacher Placement for Private Schools',
+    description: 'End-to-end recruitment support to help private schools find and hire qualified teachers.',
+    icon: 'cap',
+    order: 1,
+  },
+  {
+    title: 'Teaching Opportunities for Candidates',
+    description: 'Access to genuine, relevant teaching roles matched to your subject and experience.',
+    icon: 'person',
+    order: 2,
+  },
+  {
+    title: 'Home Tuition Services',
+    description: 'Parents are matched with verified home tutors suited to their child’s subject and schedule.',
+    icon: 'pin',
+    order: 3,
+  },
+  {
+    title: 'Candidate Verification',
+    description: 'Qualification documents and experience are reviewed before a profile is shared with a school.',
+    icon: 'check',
+    order: 4,
+  },
+  {
+    title: 'School Recruitment Support',
+    description: 'From vacancy posting to shortlisting, we support schools through the entire hiring process.',
+    icon: 'shield',
+    order: 5,
+  },
+  {
+    title: 'Trusted Education Connections',
+    description: 'A dependable network connecting schools, teachers, and parents across Pakistan.',
+    icon: 'book',
+    order: 6,
+  },
+]
+
 async function seed() {
   await connectDb()
 
@@ -340,6 +380,7 @@ async function seed() {
     Vacancy.deleteMany({}),
     Candidate.deleteMany({}),
     BlogPost.deleteMany({}),
+    Service.deleteMany({}),
   ])
 
   const schools = await School.insertMany(schoolsSeed)
@@ -355,9 +396,10 @@ async function seed() {
 
   await Candidate.insertMany(candidatesSeed)
   await BlogPost.insertMany(blogPostsSeed)
+  await Service.insertMany(servicesSeed)
 
   console.log(
-    `[seed] inserted ${schools.length} schools, ${vacanciesSeed.length} vacancies, ${candidatesSeed.length} candidates, ${blogPostsSeed.length} blog posts`,
+    `[seed] inserted ${schools.length} schools, ${vacanciesSeed.length} vacancies, ${candidatesSeed.length} candidates, ${blogPostsSeed.length} blog posts, ${servicesSeed.length} services`,
   )
 
   await mongoose.disconnect()

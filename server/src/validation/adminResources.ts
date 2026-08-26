@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { SERVICE_ICON_KEYS } from '../models/Service.js'
 
 export const vacancyInputSchema = z.object({
   title: z.string().min(2),
@@ -40,6 +41,39 @@ export const candidateInputSchema = z.object({
   tags: z.array(z.string()).default([]),
   verified: z.coerce.boolean().default(true),
   photo: z.string().default(''),
+})
+
+export const blogPostInputSchema = z.object({
+  slug: z
+    .string()
+    .min(3)
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Use lowercase letters, numbers, and hyphens only.'),
+  title: z.string().min(2),
+  excerpt: z.string().min(1),
+  category: z.string().min(1),
+  date: z.string().min(1),
+  body: z.array(z.string().min(1)).min(1, 'Add at least one paragraph.'),
+})
+
+export const serviceInputSchema = z.object({
+  title: z.string().min(2),
+  description: z.string().min(1),
+  icon: z.enum(SERVICE_ICON_KEYS),
+  order: z.coerce.number().int().default(0),
+})
+
+export const settingsInputSchema = z.object({
+  phone: z.string().min(3),
+  phoneSecondary: z.string().optional(),
+  whatsapp: z.string().min(3),
+  email: z.string().email(),
+  address: z.string().min(1),
+  social: z.object({
+    instagram: z.string().optional().default(''),
+    facebook: z.string().optional().default(''),
+    linkedin: z.string().optional().default(''),
+    youtube: z.string().optional().default(''),
+  }),
 })
 
 export const statusUpdateSchema = z.object({

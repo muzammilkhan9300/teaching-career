@@ -12,6 +12,7 @@ const candidateSchema = new Schema(
     tags: { type: [String], default: [] },
     verified: { type: Boolean, default: true },
     photo: { type: String, default: '' },
+    status: { type: String, enum: ['Active', 'Suspended'], default: 'Active' },
   },
   { timestamps: true },
 )

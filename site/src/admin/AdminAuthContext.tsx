@@ -1,12 +1,14 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError } from '@/lib/api'
+import { roleHasCapability, type AdminRole, type Capability } from './permissions'
 
 export interface AdminUser {
   id: string
   email: string
   name: string
-  role: 'admin'
+  role: AdminRole
+  active: boolean
 }
 
 interface AdminAuthContextValue {
@@ -17,6 +19,7 @@ interface AdminAuthContextValue {
   loginError: string | null
   isLoggingIn: boolean
   logout: () => void
+  can: (capability: Capability) => boolean
 }
 
 const AdminAuthContext = createContext<AdminAuthContextValue | null>(null)
@@ -54,6 +57,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     loginError: loginMutation.error instanceof ApiError ? loginMutation.error.message : null,
     isLoggingIn: loginMutation.isPending,
     logout: () => logoutMutation.mutate(),
+    can: (capability) => roleHasCapability(meQuery.data?.role, capability),
   }
 
   return <AdminAuthContext.Provider value={value}>{children}</AdminAuthContext.Provider>

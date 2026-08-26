@@ -3,50 +3,34 @@ import { Link } from 'react-router-dom'
 import type { ComponentType } from 'react'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
+import { CardSkeleton } from '@/components/ui/Skeleton'
+import { useServices } from '@/lib/queries'
 import {
   CapIcon,
   CheckCircleIcon,
   ChevronRightIcon,
+  BookIcon,
   PersonIcon,
   PinIcon,
   ShieldIcon,
+  ClockIcon,
   type IconProps,
 } from '@/components/icons'
+import type { Service } from '@/types'
 
-const SERVICES: { icon: ComponentType<IconProps>; title: string; text: string }[] = [
-  {
-    icon: CapIcon,
-    title: 'Teacher Placement for Private Schools',
-    text: 'End-to-end recruitment support to help private schools find and hire qualified teachers.',
-  },
-  {
-    icon: PersonIcon,
-    title: 'Teaching Opportunities for Candidates',
-    text: 'Access to genuine, relevant teaching roles matched to your subject and experience.',
-  },
-  {
-    icon: PinIcon,
-    title: 'Home Tuition Services',
-    text: 'Parents are matched with verified home tutors suited to their child’s subject and schedule.',
-  },
-  {
-    icon: CheckCircleIcon,
-    title: 'Candidate Verification',
-    text: 'Qualification documents and experience are reviewed before a profile is shared with a school.',
-  },
-  {
-    icon: ShieldIcon,
-    title: 'School Recruitment Support',
-    text: 'From vacancy posting to shortlisting, we support schools through the entire hiring process.',
-  },
-  {
-    icon: ChevronRightIcon,
-    title: 'Trusted Education Connections',
-    text: 'A dependable network connecting schools, teachers, and parents across Pakistan.',
-  },
-]
+const SERVICE_ICONS: Record<Service['icon'], ComponentType<IconProps>> = {
+  cap: CapIcon,
+  person: PersonIcon,
+  pin: PinIcon,
+  check: CheckCircleIcon,
+  shield: ShieldIcon,
+  clock: ClockIcon,
+  book: BookIcon,
+}
 
 export default function Services() {
+  const { data: services, isPending } = useServices()
+
   return (
     <>
       <Helmet>
@@ -67,25 +51,30 @@ export default function Services() {
 
       <section className="py-16">
         <div className="tc-container grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {SERVICES.map((service) => (
-            <div
-              key={service.title}
-              className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-6 shadow-tc transition hover:-translate-y-1 hover:shadow-tc-lg"
-            >
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-mint text-teal-deep">
-                <service.icon size={22} />
-              </span>
-              <h3 className="text-base font-bold text-navy">{service.title}</h3>
-              <p className="text-sm leading-relaxed text-body">{service.text}</p>
-              <Link
-                to="/contact"
-                className="mt-auto inline-flex items-center gap-1 text-sm font-bold text-teal-deep hover:gap-2 transition-all"
-              >
-                Learn More
-                <ChevronRightIcon size={14} />
-              </Link>
-            </div>
-          ))}
+          {isPending
+            ? Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)
+            : services?.map((service) => {
+                const Icon = SERVICE_ICONS[service.icon] ?? ShieldIcon
+                return (
+                  <div
+                    key={service.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-6 shadow-tc transition hover:-translate-y-1 hover:shadow-tc-lg"
+                  >
+                    <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-mint text-teal-deep">
+                      <Icon size={22} />
+                    </span>
+                    <h3 className="text-base font-bold text-navy">{service.title}</h3>
+                    <p className="text-sm leading-relaxed text-body">{service.description}</p>
+                    <Link
+                      to="/contact"
+                      className="mt-auto inline-flex items-center gap-1 text-sm font-bold text-teal-deep hover:gap-2 transition-all"
+                    >
+                      Learn More
+                      <ChevronRightIcon size={14} />
+                    </Link>
+                  </div>
+                )
+              })}
         </div>
       </section>
     </>

@@ -12,6 +12,7 @@ const schoolSchema = new Schema(
     photo: { type: String, required: true },
     subjects: { type: String, required: true },
     about: { type: String, required: true },
+    status: { type: String, enum: ['Active', 'Suspended'], default: 'Active' },
   },
   { timestamps: true },
 )

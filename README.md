@@ -33,8 +33,25 @@ cd site && npm run dev      # http://localhost:5173 (proxies /api and /uploads t
 ## Admin panel
 
 `http://localhost:5173/admin/login` — sign in with the `ADMIN_EMAIL`/`ADMIN_PASSWORD` set in
-`server/.env` (see `server/.env.example`) before running `npm run create-admin`. From there you can
-manage vacancies/schools/candidates and review every form submission (candidate applications,
-school registrations, home-tutor requests, contact messages, vacancy applications).
+`server/.env` (see `server/.env.example`) before running `npm run create-admin`; that account is
+always a `super_admin`. From there:
 
-See `server/README.md` and `site/README.md` for details on each half.
+- **Dashboard** — live stats and pending-review counts pulled straight from MongoDB.
+- **Vacancies / Schools / Candidates / Blogs / Services** — full CRUD, plus reversible
+  Close/Reopen/Archive/Restore/Suspend/Publish actions (public pages never show archived,
+  suspended, or draft records).
+- **Candidate Applications / School Registrations** — review submitted documents, then
+  Verify/Approve (creates the public listing and permanently deletes the uploaded documents,
+  keeping only the verification status) or Reject (also deletes the documents).
+- **Documents** — the queue of applications still awaiting a decision.
+- **Home Tutor Requests / Contact Messages / Vacancy Applications** — status + delete inboxes.
+- **Notifications** — a bell with unread count, generated whenever a public form is submitted.
+- **Staff** (`super_admin` only) — create/suspend admin accounts and set their role
+  (`super_admin` / `admin` / `moderator` — enforced server-side, not just hidden in the UI).
+- **Reports** (`admin`+) — submission trends and content breakdowns from live aggregation queries.
+- **Audit Logs** (`super_admin` only) — every admin action, who did it, and when.
+- **Settings** (`super_admin` only) — site-wide contact info and social links, reflected live on
+  the public Footer/Header/Contact/Home-Tutor pages.
+
+See `server/README.md` for the full role/capability matrix and the document-privacy model, and
+`site/README.md` for the client structure.

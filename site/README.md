@@ -31,10 +31,15 @@ npm run preview  # preview the production build locally
 
 ```
 src/
-├── admin/              admin-panel-only code: AdminAuthContext (cookie session),
-│                       AdminRoute (redirects to /admin/login when signed out),
-│                       AdminLayout (sidebar), adminQueries.ts (CRUD/status hooks),
-│                       and generic components/ (DataTable, ResourceFormModal, StatusBadge)
+├── admin/              admin-panel-only code: AdminAuthContext (cookie session + role/
+│                       capability checks), AdminRoute (redirects to /admin/login when
+│                       signed out), AdminLayout (responsive sidebar + top bar),
+│                       adminQueries.ts (CRUD/status/verification/staff/reports hooks),
+│                       useTableControls (search/sort/pagination), permissions.ts (mirrors
+│                       the server's role → capability map for UI-gating only — the server
+│                       enforces it independently), and components/ (DataTable,
+│                       ResourceFormModal, StatusBadge, NotificationsBell, RequireCapability,
+│                       charts/BarChart + LineChart)
 ├── components/
 │   ├── icons/          index.tsx (public site) and admin.ts (admin-only icons) —
 │   │                   real icons from lucide-react / react-icons
@@ -44,9 +49,11 @@ src/
 ├── layouts/              RootLayout (public header + outlet + footer)
 ├── lib/                  api.ts (fetch wrapper), queries.ts (public data hooks),
 │                        validation.ts (Zod schemas for the public forms)
-├── pages/                one component per public route; pages/admin/ holds the admin
-│                        panel's pages (dashboard, vacancies/schools/candidates CRUD,
-│                        the shared submissions-inbox page)
+├── pages/                one component per public route; pages/admin/ holds every admin
+│                        page — dashboard, CRUD for vacancies/schools/candidates/blogs/
+│                        services, candidate verification and school approval, the
+│                        document-review queue, staff, audit logs, reports, settings, and
+│                        the shared status+delete inbox used by the 3 simpler submission types
 └── types/                shared TypeScript interfaces
 ```
 

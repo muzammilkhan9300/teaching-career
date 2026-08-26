@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { CloseIcon } from '@/components/icons'
 import { SpinnerIcon } from '@/components/icons/admin'
 
-export type FieldType = 'text' | 'textarea' | 'select' | 'checkbox' | 'number' | 'tags'
+export type FieldType = 'text' | 'password' | 'textarea' | 'select' | 'checkbox' | 'number' | 'tags' | 'paragraphs'
 
 export interface FieldConfig {
   name: string
@@ -25,6 +25,7 @@ interface ResourceFormModalProps {
 
 function toInputValue(value: unknown, field: FieldConfig) {
   if (field.type === 'tags' && Array.isArray(value)) return value.join(', ')
+  if (field.type === 'paragraphs' && Array.isArray(value)) return value.join('\n\n')
   if (value === undefined || value === null || value === '') {
     if (field.type === 'checkbox') return false
     // A <select> with no matching option silently keeps an empty value while
@@ -59,6 +60,12 @@ export function ResourceFormModal({ title, fields, initialValues, isSubmitting, 
           .map((s) => s.trim())
           .filter(Boolean)
       }
+      if (field.type === 'paragraphs' && typeof output[field.name] === 'string') {
+        output[field.name] = (output[field.name] as string)
+          .split(/\n\s*\n/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      }
       if (field.type === 'number') {
         output[field.name] = Number(output[field.name])
       }
@@ -79,7 +86,7 @@ export function ResourceFormModal({ title, fields, initialValues, isSubmitting, 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
             {fields.map((field) => {
-              const wide = field.type === 'textarea' || field.type === 'tags'
+              const wide = field.type === 'textarea' || field.type === 'tags' || field.type === 'paragraphs'
               return (
                 <div key={field.name} className={wide ? 'sm:col-span-2' : undefined}>
                   {field.type === 'checkbox' ? null : (
@@ -95,6 +102,16 @@ export function ResourceFormModal({ title, fields, initialValues, isSubmitting, 
                       required={field.required}
                       rows={3}
                       placeholder={field.placeholder}
+                      className="w-full rounded-xl border border-line px-4 py-2.5 text-sm outline-none focus:border-teal focus:ring-2 focus:ring-teal/15"
+                    />
+                  ) : field.type === 'paragraphs' ? (
+                    <textarea
+                      id={`field-${field.name}`}
+                      value={values[field.name] as string}
+                      onChange={(e) => setField(field.name, e.target.value)}
+                      required={field.required}
+                      rows={8}
+                      placeholder={field.placeholder ?? 'One paragraph per line, separated by a blank line.'}
                       className="w-full rounded-xl border border-line px-4 py-2.5 text-sm outline-none focus:border-teal focus:ring-2 focus:ring-teal/15"
                     />
                   ) : field.type === 'select' ? (
@@ -125,7 +142,8 @@ export function ResourceFormModal({ title, fields, initialValues, isSubmitting, 
                   ) : (
                     <input
                       id={`field-${field.name}`}
-                      type={field.type === 'number' ? 'number' : 'text'}
+                      type={field.type === 'number' ? 'number' : field.type === 'password' ? 'password' : 'text'}
+                      autoComplete={field.type === 'password' ? 'new-password' : undefined}
                       value={values[field.name] as string | number}
                       onChange={(e) => setField(field.name, e.target.value)}
                       required={field.required}

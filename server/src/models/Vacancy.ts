@@ -18,6 +18,7 @@ const vacancySchema = new Schema(
     teachersNeeded: { type: Number, required: true, default: 1 },
     description: { type: String, required: true },
     active: { type: Boolean, default: true },
+    archived: { type: Boolean, default: false },
   },
   { timestamps: true },
 )

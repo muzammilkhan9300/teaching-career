@@ -1,12 +1,16 @@
 import { Schema, model, type HydratedDocument, type InferSchemaType, type Model } from 'mongoose'
 import bcrypt from 'bcryptjs'
 
+export const ADMIN_ROLES = ['super_admin', 'admin', 'moderator'] as const
+export type AdminRole = (typeof ADMIN_ROLES)[number]
+
 const adminSchema = new Schema(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     name: { type: String, required: true },
-    role: { type: String, enum: ['admin'], default: 'admin' },
+    role: { type: String, enum: ADMIN_ROLES, default: 'admin' },
+    active: { type: Boolean, default: true },
   },
   { timestamps: true },
 )

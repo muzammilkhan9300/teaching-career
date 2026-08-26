@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAdminSchools, useSchoolMutations } from '@/admin/adminQueries'
+import { useAdminAuth } from '@/admin/AdminAuthContext'
+import { useTableControls } from '@/admin/useTableControls'
 import { DataTable, type Column } from '@/admin/components/DataTable'
+import { ListToolbar } from '@/admin/components/ListToolbar'
+import { StatusBadge } from '@/admin/components/StatusBadge'
 import { ResourceFormModal, type FieldConfig } from '@/admin/components/ResourceFormModal'
+import { Pagination } from '@/components/ui/Pagination'
 import { useToast } from '@/components/ui/Toast'
 import { ApiError } from '@/lib/api'
 import { EditIcon, PlusIcon, SpinnerIcon, TrashIcon } from '@/components/icons/admin'
@@ -22,16 +27,19 @@ const FIELDS: FieldConfig[] = [
 
 export default function AdminSchools() {
   const { data: schools, isPending } = useAdminSchools()
-  const { create, update, remove } = useSchoolMutations()
+  const { create, update, remove, runStatusAction } = useSchoolMutations()
+  const { can } = useAdminAuth()
   const { showToast } = useToast()
   const [editing, setEditing] = useState<School | 'new' | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
+  const controls = useTableControls(schools ?? [], { searchKeys: ['name', 'city', 'curriculum'], defaultSortKey: 'createdAt' as never })
+
   const columns: Column<School>[] = [
-    { key: 'name', label: 'Name' },
-    { key: 'city', label: 'City' },
+    { key: 'name', label: 'Name', sortable: true },
+    { key: 'city', label: 'City', sortable: true },
     { key: 'curriculum', label: 'Curriculum' },
-    { key: 'registered', label: 'Registered', render: (s) => (s.registered ? 'Yes' : 'No') },
+    { key: 'status', label: 'Status', render: (s) => <StatusBadge status={s.status} /> },
   ]
 
   function handleSubmit(values: Record<string, unknown>) {
@@ -49,11 +57,21 @@ export default function AdminSchools() {
   }
 
   function handleDelete(school: School) {
-    if (!window.confirm(`Delete "${school.name}"? This cannot be undone.`)) return
+    if (!window.confirm(`Permanently delete "${school.name}"? This cannot be undone.`)) return
     remove.mutate(school.id, {
       onSuccess: () => showToast({ variant: 'success', title: 'School deleted' }),
       onError: (err) => showToast({ variant: 'error', title: 'Delete failed', description: err instanceof ApiError ? err.message : undefined }),
     })
+  }
+
+  function handleStatusAction(school: School, action: string, label: string) {
+    runStatusAction.mutate(
+      { id: school.id, action },
+      {
+        onSuccess: () => showToast({ variant: 'success', title: `School ${label}` }),
+        onError: (err) => showToast({ variant: 'error', title: 'Action failed', description: err instanceof ApiError ? err.message : undefined }),
+      },
+    )
   }
 
   return (
@@ -62,20 +80,24 @@ export default function AdminSchools() {
         <title>Schools — Admin — TeachingCareer</title>
       </Helmet>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-navy">Schools</h1>
           <p className="text-sm text-body">Manage the school profiles shown on the public site.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditing('new')}
-          className="inline-flex items-center gap-2 rounded-full bg-teal px-5 py-2.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark"
-        >
-          <PlusIcon size={16} />
-          Add School
-        </button>
+        {can('manageContent') ? (
+          <button
+            type="button"
+            onClick={() => setEditing('new')}
+            className="inline-flex items-center gap-2 rounded-full bg-teal px-5 py-2.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark"
+          >
+            <PlusIcon size={16} />
+            Add School
+          </button>
+        ) : null}
       </div>
+
+      <ListToolbar search={controls.search} onSearchChange={controls.setSearch} placeholder="Search by name, city, or curriculum…" resultCount={controls.totalCount} />
 
       {isPending ? (
         <div className="flex items-center gap-2 py-10 text-body">
@@ -83,22 +105,43 @@ export default function AdminSchools() {
           Loading schools…
         </div>
       ) : (
-        <DataTable
-          columns={columns}
-          rows={schools ?? []}
-          rowKey={(row) => row.id}
-          emptyMessage="No schools yet. Add one to get started."
-          actions={(row) => (
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setEditing(row)} className="rounded-lg p-1.5 text-body hover:bg-mint hover:text-teal-deep" aria-label="Edit">
-                <EditIcon size={16} />
-              </button>
-              <button type="button" onClick={() => handleDelete(row)} className="rounded-lg p-1.5 text-body hover:bg-red-50 hover:text-red-600" aria-label="Delete">
-                <TrashIcon size={16} />
-              </button>
-            </div>
-          )}
-        />
+        <>
+          <DataTable
+            columns={columns}
+            rows={controls.rows}
+            rowKey={(row) => row.id}
+            emptyMessage="No schools match."
+            sortKey={controls.sortKey as string}
+            sortDir={controls.sortDir}
+            onSort={(key) => controls.toggleSort(key as keyof School)}
+            actions={(row) => (
+              <div className="flex flex-wrap justify-end gap-1.5">
+                {can('manageContent') ? (
+                  row.status === 'Active' ? (
+                    <button type="button" onClick={() => handleStatusAction(row, 'suspend', 'suspended')} className="rounded-lg px-2 py-1 text-xs font-semibold text-body hover:bg-mint hover:text-teal-deep">
+                      Suspend
+                    </button>
+                  ) : (
+                    <button type="button" onClick={() => handleStatusAction(row, 'restore', 'restored')} className="rounded-lg px-2 py-1 text-xs font-semibold text-body hover:bg-mint hover:text-teal-deep">
+                      Restore
+                    </button>
+                  )
+                ) : null}
+                {can('manageContent') ? (
+                  <button type="button" onClick={() => setEditing(row)} className="rounded-lg p-1.5 text-body hover:bg-mint hover:text-teal-deep" aria-label="Edit">
+                    <EditIcon size={16} />
+                  </button>
+                ) : null}
+                {can('hardDelete') ? (
+                  <button type="button" onClick={() => handleDelete(row)} className="rounded-lg p-1.5 text-body hover:bg-red-50 hover:text-red-600" aria-label="Delete">
+                    <TrashIcon size={16} />
+                  </button>
+                ) : null}
+              </div>
+            )}
+          />
+          <Pagination page={controls.page} totalPages={controls.totalPages} onChange={controls.setPage} />
+        </>
       )}
 
       {editing ? (

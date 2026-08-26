@@ -5,6 +5,7 @@ import { writeLimiter } from '../middleware/rateLimiter.js'
 import { upload, uploadedFileUrl } from '../middleware/upload.js'
 import { candidateRegistrationBodySchema } from '../validation/candidateRegistration.js'
 import { HttpError } from '../utils/HttpError.js'
+import { notify } from '../lib/notify.js'
 
 export const candidateRegistrationsRouter = Router()
 
@@ -44,6 +45,7 @@ candidateRegistrationsRouter.post(
       applicationStatus: 'New',
     })
 
+    notify('candidate-application', `New candidate application from ${application.fullName}`, '/admin/candidate-applications')
     res.status(201).json(application)
   }),
 )

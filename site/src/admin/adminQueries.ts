@@ -1,23 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import type { Candidate, CandidatesPage, School, Vacancy } from '@/types'
+import type { AdminUser } from './AdminAuthContext'
+import type { Candidate, School, Service, Settings, Vacancy, BlogPost } from '@/types'
 
-// ---- Managed listings (Vacancy / School / Candidate): admin CRUD ----
+// ---- Managed listings (Vacancy / School / Candidate / BlogPost / Service): admin CRUD ----
+// These call the /admin/* endpoints (not the public ones), which return
+// every record including archived/suspended/draft ones — the public routes
+// filter those out, so the admin list would otherwise never be able to find
+// and restore them.
 
 export function useAdminVacancies() {
-  return useQuery({ queryKey: ['admin', 'vacancies'], queryFn: () => api.get<Vacancy[]>('/vacancies') })
+  return useQuery({ queryKey: ['admin', 'vacancies'], queryFn: () => api.get<Vacancy[]>('/admin/vacancies') })
 }
 
 export function useAdminSchools() {
-  return useQuery({ queryKey: ['admin', 'schools'], queryFn: () => api.get<School[]>('/schools') })
+  return useQuery({ queryKey: ['admin', 'schools'], queryFn: () => api.get<School[]>('/admin/schools') })
 }
 
 export function useAdminCandidates() {
-  return useQuery({
-    queryKey: ['admin', 'candidates'],
-    queryFn: () => api.get<CandidatesPage>('/candidates?limit=1000&page=1'),
-    select: (data) => data.items,
-  })
+  return useQuery({ queryKey: ['admin', 'candidates'], queryFn: () => api.get<Candidate[]>('/admin/candidates') })
+}
+
+export function useAdminBlogPosts() {
+  return useQuery({ queryKey: ['admin', 'blog-posts'], queryFn: () => api.get<BlogPost[]>('/admin/blog-posts') })
+}
+
+export function useAdminServices() {
+  return useQuery({ queryKey: ['admin', 'services'], queryFn: () => api.get<Service[]>('/admin/services') })
 }
 
 function useCrudMutations<T extends { id: string }>(resource: string, invalidateKeys: string[][]) {
@@ -37,23 +46,39 @@ function useCrudMutations<T extends { id: string }>(resource: string, invalidate
     mutationFn: (id: string) => api.delete(`/admin/${resource}/${id}`),
     onSuccess: invalidate,
   })
+  const runStatusAction = useMutation({
+    mutationFn: ({ id, action }: { id: string; action: string }) =>
+      api.patchJson<T>(`/admin/${resource}/${id}/status`, { action }),
+    onSuccess: invalidate,
+  })
 
-  return { create, update, remove }
+  return { create, update, remove, runStatusAction }
 }
 
 export function useVacancyMutations() {
-  return useCrudMutations<Vacancy>('vacancies', [['admin', 'vacancies'], ['vacancies'], ['admin', 'stats']])
+  return useCrudMutations<Vacancy>('vacancies', [['admin', 'vacancies'], ['vacancies'], ['admin', 'stats'], ['admin', 'reports']])
 }
 
 export function useSchoolMutations() {
-  return useCrudMutations<School>('schools', [['admin', 'schools'], ['schools'], ['admin', 'stats']])
+  return useCrudMutations<School>('schools', [['admin', 'schools'], ['schools'], ['admin', 'stats'], ['admin', 'reports']])
 }
 
 export function useCandidateMutations() {
-  return useCrudMutations<Candidate>('candidates', [['admin', 'candidates'], ['candidates'], ['admin', 'stats']])
+  return useCrudMutations<Candidate>('candidates', [['admin', 'candidates'], ['candidates'], ['admin', 'stats'], ['admin', 'reports']])
+}
+
+export function useBlogPostMutations() {
+  return useCrudMutations<BlogPost>('blog-posts', [['admin', 'blog-posts'], ['blog-posts']])
+}
+
+export function useServiceMutations() {
+  return useCrudMutations<Service>('services', [['admin', 'services'], ['services']])
 }
 
 // ---- Submission inboxes: read + status update + delete ----
+// (Home Tutor Requests / Contact Messages / Vacancy Applications — Candidate
+// Applications and School Registrations have their own dedicated
+// verify/approve flow below instead of a free-text status field.)
 
 export interface SubmissionRecord {
   id: string
@@ -89,6 +114,192 @@ export function useSubmissionMutations(resource: string) {
   return { updateStatus, remove }
 }
 
+// ---- Candidate verification & school approval (promotion workflow) ----
+
+export function useCandidateApplications() {
+  return useAdminSubmissions('candidate-applications')
+}
+
+export function useCandidateVerification() {
+  const queryClient = useQueryClient()
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', 'candidate-applications'] })
+    queryClient.invalidateQueries({ queryKey: ['admin', 'candidates'] })
+    queryClient.invalidateQueries({ queryKey: ['admin', 'documents', 'pending'] })
+    queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] })
+  }
+
+  const verify = useMutation({
+    mutationFn: (id: string) => api.postJson(`/admin/candidate-applications/${id}/verify`, {}),
+    onSuccess: invalidate,
+  })
+  const reject = useMutation({
+    mutationFn: (id: string) => api.postJson(`/admin/candidate-applications/${id}/reject`, {}),
+    onSuccess: invalidate,
+  })
+
+  return { verify, reject }
+}
+
+export function useSchoolRegistrations() {
+  return useAdminSubmissions('school-registrations')
+}
+
+export function useSchoolApproval() {
+  const queryClient = useQueryClient()
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['admin', 'school-registrations'] })
+    queryClient.invalidateQueries({ queryKey: ['admin', 'schools'] })
+    queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] })
+  }
+
+  const approve = useMutation({
+    mutationFn: (id: string) => api.postJson(`/admin/school-registrations/${id}/approve`, {}),
+    onSuccess: invalidate,
+  })
+  const reject = useMutation({
+    mutationFn: (id: string) => api.postJson(`/admin/school-registrations/${id}/reject`, {}),
+    onSuccess: invalidate,
+  })
+
+  return { approve, reject }
+}
+
+// ---- Document management (private, temporary) ----
+
+export function useAdminPendingDocuments() {
+  return useQuery({
+    queryKey: ['admin', 'documents', 'pending'],
+    queryFn: () => api.get<SubmissionRecord[]>('/admin/documents/pending'),
+  })
+}
+
+export function adminDocumentUrl(applicationId: string, field: string) {
+  return `/api/admin/documents/${applicationId}/${field}`
+}
+
+// ---- Notifications ----
+
+export interface NotificationRecord {
+  id: string
+  type: string
+  message: string
+  link?: string
+  read: boolean
+  createdAt: string
+}
+
+export function useAdminNotifications() {
+  return useQuery({
+    queryKey: ['admin', 'notifications'],
+    queryFn: () => api.get<{ items: NotificationRecord[]; unreadCount: number }>('/admin/notifications'),
+    refetchInterval: 30_000,
+  })
+}
+
+export function useNotificationMutations() {
+  const queryClient = useQueryClient()
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'notifications'] })
+
+  const markRead = useMutation({
+    mutationFn: (id: string) => api.patchJson(`/admin/notifications/${id}/read`, {}),
+    onSuccess: invalidate,
+  })
+  const markAllRead = useMutation({
+    mutationFn: () => api.postJson('/admin/notifications/mark-all-read', {}),
+    onSuccess: invalidate,
+  })
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/admin/notifications/${id}`),
+    onSuccess: invalidate,
+  })
+
+  return { markRead, markAllRead, remove }
+}
+
+// ---- Staff & permissions ----
+
+export function useAdminStaff() {
+  return useQuery({ queryKey: ['admin', 'staff'], queryFn: () => api.get<AdminUser[]>('/admin/staff') })
+}
+
+export function useStaffMutations() {
+  const queryClient = useQueryClient()
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'staff'] })
+
+  const create = useMutation({
+    mutationFn: (data: { name: string; email: string; password: string; role: string }) =>
+      api.postJson<AdminUser>('/admin/staff', data),
+    onSuccess: invalidate,
+  })
+  const update = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      api.putJson<AdminUser>(`/admin/staff/${id}`, data),
+    onSuccess: invalidate,
+  })
+
+  return { create, update }
+}
+
+// ---- Audit logs ----
+
+export interface AuditLogRecord {
+  id: string
+  adminEmail: string
+  action: string
+  resource: string
+  resourceId?: string
+  details?: string
+  createdAt: string
+}
+
+export function useAuditLogs(page: number) {
+  return useQuery({
+    queryKey: ['admin', 'audit-logs', page],
+    queryFn: () => api.get<{ items: AuditLogRecord[]; total: number; page: number; totalPages: number }>(`/admin/audit-logs?page=${page}`),
+    placeholderData: (prev) => prev,
+  })
+}
+
+// ---- Reports ----
+
+export interface ReportsOverview {
+  submissionsByDay: {
+    date: string
+    candidateApplications: number
+    schoolRegistrations: number
+    homeTutorRequests: number
+    contactMessages: number
+    vacancyApplications: number
+  }[]
+  applicationsByStatus: { label: string; count: number }[]
+  vacanciesByCity: { label: string; count: number }[]
+  vacanciesByEmploymentType: { label: string; count: number }[]
+  schoolsByCurriculum: { label: string; count: number }[]
+  candidatesByCity: { label: string; count: number }[]
+}
+
+export function useAdminReports() {
+  return useQuery({ queryKey: ['admin', 'reports'], queryFn: () => api.get<ReportsOverview>('/admin/reports/overview') })
+}
+
+// ---- Settings ----
+
+export function useAdminSettingsQuery() {
+  return useQuery({ queryKey: ['admin', 'settings'], queryFn: () => api.get<Settings>('/settings') })
+}
+
+export function useUpdateSettings() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) => api.putJson<Settings>('/admin/settings', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] })
+      queryClient.invalidateQueries({ queryKey: ['settings'] })
+    },
+  })
+}
+
 // ---- Dashboard stats ----
 
 export interface AdminStats {
@@ -101,6 +312,8 @@ export interface AdminStats {
   homeTutorRequests: number
   contactMessages: number
   vacancyApplications: number
+  pendingVerifications: number
+  pendingApprovals: number
 }
 
 export function useAdminStats() {

@@ -35,11 +35,21 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'))
 const AdminVacancies = lazy(() => import('@/pages/admin/AdminVacancies'))
 const AdminSchools = lazy(() => import('@/pages/admin/AdminSchools'))
 const AdminCandidates = lazy(() => import('@/pages/admin/AdminCandidates'))
+const AdminBlogs = lazy(() => import('@/pages/admin/AdminBlogs'))
+const AdminServices = lazy(() => import('@/pages/admin/AdminServices'))
+const AdminDocuments = lazy(() => import('@/pages/admin/AdminDocuments'))
+const AdminCandidateApplications = lazy(() => import('@/pages/admin/AdminCandidateApplications'))
+const AdminSchoolRegistrations = lazy(() => import('@/pages/admin/AdminSchoolRegistrations'))
+const AdminStaff = lazy(() => import('@/pages/admin/AdminStaff'))
+const AdminAuditLogs = lazy(() => import('@/pages/admin/AdminAuditLogs'))
+const AdminReports = lazy(() => import('@/pages/admin/AdminReports'))
+const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings'))
 const AdminSubmissions = lazy(() => import('@/pages/admin/AdminSubmissions'))
 
+// Home Tutor Requests / Contact Messages / Vacancy Applications use the
+// generic status+delete inbox; Candidate Applications and School
+// Registrations have their own dedicated verify/approve pages instead.
 const SUBMISSION_ROUTES: { path: string; resource: SubmissionResource }[] = [
-  { path: 'candidate-applications', resource: 'candidate-applications' },
-  { path: 'school-registrations', resource: 'school-registrations' },
   { path: 'home-tutor-requests', resource: 'home-tutor-requests' },
   { path: 'contact-messages', resource: 'contact-messages' },
   { path: 'vacancy-applications', resource: 'vacancy-applications' },
@@ -82,9 +92,18 @@ export default function App() {
                       <Route path="vacancies" element={<AdminVacancies />} />
                       <Route path="schools" element={<AdminSchools />} />
                       <Route path="candidates" element={<AdminCandidates />} />
+                      <Route path="blogs" element={<AdminBlogs />} />
+                      <Route path="services" element={<AdminServices />} />
+                      <Route path="documents" element={<AdminDocuments />} />
+                      <Route path="candidate-applications" element={<AdminCandidateApplications />} />
+                      <Route path="school-registrations" element={<AdminSchoolRegistrations />} />
                       {SUBMISSION_ROUTES.map((r) => (
                         <Route key={r.path} path={r.path} element={<AdminSubmissions resource={r.resource} />} />
                       ))}
+                      <Route path="reports" element={<AdminReports />} />
+                      <Route path="staff" element={<AdminStaff />} />
+                      <Route path="audit-logs" element={<AdminAuditLogs />} />
+                      <Route path="settings" element={<AdminSettings />} />
                     </Route>
                   </Route>
                 </Route>

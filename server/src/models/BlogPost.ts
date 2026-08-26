@@ -9,6 +9,7 @@ const blogPostSchema = new Schema(
     category: { type: String, required: true },
     date: { type: String, required: true },
     body: { type: [String], default: [] },
+    status: { type: String, enum: ['Draft', 'Published', 'Archived'], default: 'Published' },
   },
   { timestamps: true },
 )

@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import { ChevronRightIcon, CloseIcon, MenuIcon, PhoneIcon } from '@/components/icons'
+import { useSettings } from '@/lib/queries'
+
+const FALLBACK_PHONE = '0312 8423676'
 
 interface NavLeaf {
   label: string
@@ -42,6 +45,8 @@ function isParent(entry: NavEntry): entry is NavParent {
 }
 
 export function Header() {
+  const { data: settings } = useSettings()
+  const phone = settings?.phone ?? FALLBACK_PHONE
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openMobileMenus, setOpenMobileMenus] = useState<string[]>([])
   const location = useLocation()
@@ -118,14 +123,14 @@ export function Header() {
 
         <div className="ml-auto flex items-center gap-4">
           <a
-            href="tel:03128423676"
+            href={`tel:${phone.replace(/\s+/g, '')}`}
             className="hidden items-center gap-2 text-navy sm:flex"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-mint text-teal-deep">
               <PhoneIcon size={16} />
             </span>
             <span className="flex flex-col leading-tight">
-              <span className="text-sm font-bold">0312 8423676</span>
+              <span className="text-sm font-bold">{phone}</span>
               <span className="text-[11px] text-body">24/7 Availability</span>
             </span>
           </a>
@@ -197,9 +202,9 @@ export function Header() {
               )
             })}
             <li className="mt-2 border-t border-line pt-3">
-              <a href="tel:03128423676" className="flex items-center gap-2 px-3 text-sm font-bold text-navy">
+              <a href={`tel:${phone.replace(/\s+/g, '')}`} className="flex items-center gap-2 px-3 text-sm font-bold text-navy">
                 <PhoneIcon size={16} className="text-teal-deep" />
-                0312 8423676
+                {phone}
               </a>
             </li>
           </ul>

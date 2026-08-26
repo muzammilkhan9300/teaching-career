@@ -25,6 +25,7 @@ export const requireAdmin = asyncHandler(async (req: Request, _res: Response, ne
 
   const admin = await Admin.findById(payload.sub)
   if (!admin) throw new HttpError(401, 'Not authenticated')
+  if (!admin.active) throw new HttpError(401, 'This account has been suspended.')
 
   req.admin = admin
   next()

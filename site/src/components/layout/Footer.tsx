@@ -15,7 +15,20 @@ import {
 import { TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
 import { api, ApiError } from '@/lib/api'
+import { useSettings } from '@/lib/queries'
 import { contactMessageSchema, type ContactMessageInput } from '@/lib/validation'
+
+// The footer has always shown a separate landline number from the
+// phone used in the header/contact/home-tutor pages (settings.phone) — kept
+// as-is here rather than merged, so no displayed value changes when
+// settings loads.
+const FOOTER_PHONE = '+92 314 444 7779'
+
+const FALLBACK_SETTINGS = {
+  email: 'info@teachingcareer.pk',
+  address: 'Islamabad, Pakistan',
+  social: { instagram: '#', facebook: '#', linkedin: '#', youtube: '#' },
+}
 
 const QUICK_LINKS = [
   { label: 'Home', to: '/' },
@@ -29,14 +42,18 @@ const QUICK_LINKS = [
 ]
 
 const SOCIAL_LINKS = [
-  { label: 'Instagram', icon: InstagramIcon },
-  { label: 'Facebook', icon: FacebookIcon },
-  { label: 'LinkedIn', icon: LinkedinIcon },
-  { label: 'YouTube', icon: YoutubeIcon },
+  { label: 'Instagram', icon: InstagramIcon, key: 'instagram' as const },
+  { label: 'Facebook', icon: FacebookIcon, key: 'facebook' as const },
+  { label: 'LinkedIn', icon: LinkedinIcon, key: 'linkedin' as const },
+  { label: 'YouTube', icon: YoutubeIcon, key: 'youtube' as const },
 ]
 
 export function Footer() {
   const { showToast } = useToast()
+  const { data: settings } = useSettings()
+  const email = settings?.email ?? FALLBACK_SETTINGS.email
+  const address = settings?.address ?? FALLBACK_SETTINGS.address
+  const social = settings?.social ?? FALLBACK_SETTINGS.social
   const {
     register,
     handleSubmit,
@@ -88,19 +105,19 @@ export function Footer() {
           <ul className="mt-2 flex flex-col gap-2.5 text-sm">
             <li className="flex items-center gap-2.5">
               <PhoneIcon size={15} className="text-teal" />
-              <a href="tel:+923144447779" className="hover:text-teal">
-                +92 314 444 7779
+              <a href={`tel:${FOOTER_PHONE.replace(/\s+/g, '')}`} className="hover:text-teal">
+                {FOOTER_PHONE}
               </a>
             </li>
             <li className="flex items-center gap-2.5">
               <MailIcon size={15} className="text-teal" />
-              <a href="mailto:info@teachingcareer.pk" className="hover:text-teal">
-                info@teachingcareer.pk
+              <a href={`mailto:${email}`} className="hover:text-teal">
+                {email}
               </a>
             </li>
             <li className="flex items-center gap-2.5">
               <PinIcon size={15} className="text-teal" />
-              <span>Islamabad, Pakistan</span>
+              <span>{address}</span>
             </li>
           </ul>
         </div>
@@ -128,10 +145,12 @@ export function Footer() {
             Follow us on social media to stay updated with the latest opportunities, tips, and education insights.
           </p>
           <ul className="mt-1 flex gap-3">
-            {SOCIAL_LINKS.map(({ label, icon: Icon }) => (
+            {SOCIAL_LINKS.map(({ label, icon: Icon, key }) => (
               <li key={label}>
                 <a
-                  href="#"
+                  href={social[key] || '#'}
+                  target={social[key] ? '_blank' : undefined}
+                  rel={social[key] ? 'noreferrer' : undefined}
                   aria-label={label}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-teal"
                 >

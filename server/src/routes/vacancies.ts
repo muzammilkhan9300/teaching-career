@@ -4,13 +4,14 @@ import { VacancyApplication } from '../models/VacancyApplication.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { writeLimiter } from '../middleware/rateLimiter.js'
 import { NotFoundError } from '../utils/HttpError.js'
+import { notify } from '../lib/notify.js'
 
 export const vacanciesRouter = Router()
 
 vacanciesRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    const filter: Record<string, unknown> = {}
+    const filter: Record<string, unknown> = { archived: false }
     if (req.query.schoolId) filter.schoolId = req.query.schoolId
     if (req.query.active !== undefined) filter.active = req.query.active === 'true'
 
@@ -22,7 +23,7 @@ vacanciesRouter.get(
 vacanciesRouter.get(
   '/:id',
   asyncHandler(async (req, res) => {
-    const vacancy = await Vacancy.findById(req.params.id)
+    const vacancy = await Vacancy.findOne({ _id: req.params.id, archived: false })
     if (!vacancy) throw new NotFoundError('Vacancy not found')
     res.json(vacancy)
   }),
@@ -41,6 +42,7 @@ vacanciesRouter.post(
       schoolId: vacancy.schoolId,
       applicationStatus: 'Applied',
     })
+    notify('vacancy-application', `New application for "${vacancy.title}"`, '/admin/vacancy-applications')
     res.status(201).json(application)
   }),
 )
