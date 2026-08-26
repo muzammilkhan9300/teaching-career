@@ -12,7 +12,7 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, init)
+  const res = await fetch(`${API_BASE}${path}`, { credentials: 'include', ...init })
 
   if (!res.ok) {
     let message = res.statusText
@@ -39,6 +39,19 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     }),
+  putJson: <T>(path: string, body: unknown) =>
+    request<T>(path, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+  patchJson: <T>(path: string, body: unknown) =>
+    request<T>(path, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
   postForm: <T>(path: string, formData: FormData) =>
     request<T>(path, { method: 'POST', body: formData }),
+  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 }

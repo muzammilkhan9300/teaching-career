@@ -1,6 +1,7 @@
 import path from 'node:path'
 import express from 'express'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import { env } from './config/env.js'
@@ -11,10 +12,11 @@ export function createApp() {
   const app = express()
 
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
-  app.use(cors({ origin: env.clientOrigin }))
+  app.use(cors({ origin: env.clientOrigin, credentials: true }))
   app.use(morgan('dev'))
   app.use(express.json())
   app.use(express.urlencoded({ extended: true }))
+  app.use(cookieParser())
 
   app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')))
   app.use('/api', apiRouter)
