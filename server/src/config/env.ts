@@ -35,13 +35,14 @@ export const env = {
   nodeEnv,
   isProduction,
 
-  // Only used in production, to serve the built React app (site/dist) from
-  // this same Express process. Defaults to the sibling `site/dist` folder
-  // that exists when server/ and site/ are deployed together from one repo
-  // checkout; override with CLIENT_DIST_PATH if your deployment layout differs.
-  clientDistPath: path.resolve(
-    process.env.CLIENT_DIST_PATH || path.join(SERVER_ROOT, '../site/dist'),
-  ),
+  // Only used in production, to serve the built React app from this same
+  // Express process. Defaults to server/dist/public — the client's Vite
+  // build is configured (site/vite.config.ts) to output there, nested
+  // inside the server's own dist/ rather than a sibling site/dist, so that
+  // deploy tools which only keep a declared "output directory" (e.g.
+  // Hostinger's Node.js app import) don't discard it. Override with
+  // CLIENT_DIST_PATH if your deployment layout differs.
+  clientDistPath: path.resolve(process.env.CLIENT_DIST_PATH || path.join(SERVER_ROOT, 'dist/public')),
 
   // Where uploaded photos/logos/documents are written and served from —
   // always server/uploads regardless of the process's working directory.

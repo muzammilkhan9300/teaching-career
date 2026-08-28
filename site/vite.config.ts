@@ -11,6 +11,15 @@ export default defineConfig({
       '@': path.resolve(import.meta.dirname, './src'),
     },
   },
+  build: {
+    // Nested inside server/dist (not a sibling site/dist) so that deploy
+    // tools which only carry over a declared "output directory" (e.g.
+    // Hostinger's Node.js app import, configured with server/dist as that
+    // output) don't discard the built client — see config/env.ts's
+    // clientDistPath in the server for the matching read side.
+    outDir: path.resolve(import.meta.dirname, '../server/dist/public'),
+    emptyOutDir: true,
+  },
   server: {
     // Pinned rather than left to Vite's default auto-increment: a second
     // `npm run dev` now fails loudly with "port in use" instead of silently
