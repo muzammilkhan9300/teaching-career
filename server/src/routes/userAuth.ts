@@ -102,16 +102,14 @@ userAuthRouter.post(
 
     const resetUrl = `${env.clientOrigin}/reset-password?token=${rawToken}`
 
-    // No email provider is configured yet — surface the link instead of
-    // silently pretending an email went out. Wire a real provider (SMTP /
-    // SendGrid / Resend) here and remove `devResetUrl` once one exists.
-    if (!env.isProduction) {
-      console.log(`[password-reset] ${user.email} -> ${resetUrl}`)
-      res.json({ ...genericResponse, devResetUrl: resetUrl })
-      return
-    }
-
-    res.json(genericResponse)
+    // No email provider is configured yet — this is logged either way so a
+    // developer with server access can complete the flow manually. It's only
+    // ever included in the API response when EXPOSE_DEV_RESET_URL=true is
+    // explicitly set (see config/env.ts) — until a real provider (SMTP /
+    // SendGrid / Resend) is wired up here, real users on a deployment without
+    // that flag have no way to complete a password reset.
+    console.log(`[password-reset] ${user.email} -> ${resetUrl}`)
+    res.json(env.exposeDevResetUrl ? { ...genericResponse, devResetUrl: resetUrl } : genericResponse)
   }),
 )
 

@@ -48,6 +48,14 @@ export const env = {
   // always server/uploads regardless of the process's working directory.
   uploadsRoot: path.join(SERVER_ROOT, 'uploads'),
 
+  // Opt-in only, and NOT tied to isProduction — /auth/forgot-password has no
+  // real email provider wired up yet, so this is the only way to obtain a
+  // reset link. Deliberately requires an explicit true rather than inferring
+  // safety from environment detection (which has already proven unreliable
+  // on at least one host): defaulting to "off" here means a misconfigured or
+  // unrecognized environment fails closed (no token leak) instead of open.
+  exposeDevResetUrl: process.env.EXPOSE_DEV_RESET_URL === 'true',
+
   // Optional — Google Sign-In stays disabled (routes respond 503) until both
   // are set. Never fabricate values here; there is no working fallback.
   googleClientId: process.env.GOOGLE_CLIENT_ID,

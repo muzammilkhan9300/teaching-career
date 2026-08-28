@@ -33,19 +33,20 @@ export function createApp() {
   app.use('/uploads/logos', express.static(path.join(env.uploadsRoot, 'logos')))
   app.use('/api', apiRouter)
 
-  // In production this one process also serves the built React app (see
-  // config/env.ts's clientDistPath) — Hostinger's Node.js app hosting runs a
-  // single process per domain, so the API and the static frontend share it
-  // rather than needing two separate deployments.
-  if (env.isProduction) {
-    if (fs.existsSync(env.clientDistPath)) {
-      app.use(express.static(env.clientDistPath))
-      app.get(/^(?!\/api\/|\/uploads\/).*/, (_req, res) => {
-        res.sendFile(path.join(env.clientDistPath, 'index.html'))
-      })
-    } else {
-      console.warn(`[server] clientDistPath not found: ${env.clientDistPath} (site not built?)`)
-    }
+  // This one process also serves the built React app when it's present (see
+  // config/env.ts's clientDistPath) — deploy hosts that run a single process
+  // per domain share the API and the static frontend rather than needing two
+  // separate deployments. Deliberately not gated on env.isProduction: some
+  // hosts don't reliably propagate NODE_ENV to the running process, and
+  // whether a build exists on disk is a more trustworthy signal than an
+  // environment variable that may not have arrived.
+  if (fs.existsSync(env.clientDistPath)) {
+    app.use(express.static(env.clientDistPath))
+    app.get(/^(?!\/api\/|\/uploads\/).*/, (_req, res) => {
+      res.sendFile(path.join(env.clientDistPath, 'index.html'))
+    })
+  } else if (env.isProduction) {
+    console.warn(`[server] clientDistPath not found: ${env.clientDistPath} (site not built?)`)
   }
 
   app.use(notFoundHandler)
