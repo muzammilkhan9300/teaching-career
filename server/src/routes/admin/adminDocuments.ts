@@ -6,11 +6,12 @@ import { asyncHandler } from '../../middleware/asyncHandler.js'
 import { requireAdmin } from '../../middleware/requireAdmin.js'
 import { requirePermission } from '../../lib/permissions.js'
 import { NotFoundError } from '../../utils/HttpError.js'
+import { env } from '../../config/env.js'
 
 export const adminDocumentsRouter = Router()
 adminDocumentsRouter.use(requireAdmin, requirePermission('reviewSubmissions'))
 
-const UPLOADS_ROOT = path.resolve(process.cwd(), 'uploads')
+const UPLOADS_ROOT = env.uploadsRoot
 
 const DOCUMENT_FIELDS: Record<string, string> = {
   degreeDocument: 'degreeDocumentPath',

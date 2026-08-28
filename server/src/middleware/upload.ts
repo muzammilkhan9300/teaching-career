@@ -4,7 +4,7 @@ import multer, { type FileFilterCallback } from 'multer'
 import type { Request } from 'express'
 import { env } from '../config/env.js'
 
-const UPLOADS_ROOT = path.resolve(process.cwd(), 'uploads')
+const UPLOADS_ROOT = env.uploadsRoot
 
 const PHOTO_FIELDS = new Set(['profilePhoto', 'schoolLogo'])
 const DOCUMENT_FIELDS = new Set(['degreeDocument', 'experienceDocument', 'policeVerification'])

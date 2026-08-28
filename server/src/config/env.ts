@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import 'dotenv/config'
 
 function required(name: string, fallback?: string): string {
@@ -8,6 +9,12 @@ function required(name: string, fallback?: string): string {
   }
   return value
 }
+
+// Anchored to this compiled file's own location (server/dist/config/env.js)
+// rather than process.cwd() — some deploy tools launch the entry file with
+// the working directory set to the repo root, others to server/, so cwd
+// can't be trusted to always mean "the server package's own folder".
+const SERVER_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
 export const env = {
   port: Number(required('PORT', '4000')),
@@ -26,8 +33,12 @@ export const env = {
   // that exists when server/ and site/ are deployed together from one repo
   // checkout; override with CLIENT_DIST_PATH if your deployment layout differs.
   clientDistPath: path.resolve(
-    process.env.CLIENT_DIST_PATH || path.join(process.cwd(), '../site/dist'),
+    process.env.CLIENT_DIST_PATH || path.join(SERVER_ROOT, '../site/dist'),
   ),
+
+  // Where uploaded photos/logos/documents are written and served from —
+  // always server/uploads regardless of the process's working directory.
+  uploadsRoot: path.join(SERVER_ROOT, 'uploads'),
 
   // Optional — Google Sign-In stays disabled (routes respond 503) until both
   // are set. Never fabricate values here; there is no working fallback.

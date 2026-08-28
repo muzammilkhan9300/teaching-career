@@ -1,7 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { env } from '../config/env.js'
 
-const UPLOADS_ROOT = path.resolve(process.cwd(), 'uploads')
+const UPLOADS_ROOT = env.uploadsRoot
 
 /** Deletes a file previously saved under uploads/, given its stored "/uploads/<subdir>/<name>" path. */
 export function deleteUploadedFile(storedPath: string | undefined | null) {

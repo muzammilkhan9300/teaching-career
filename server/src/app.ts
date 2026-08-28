@@ -29,9 +29,8 @@ export function createApp() {
   // NOT mounted here — they're only reachable through the authenticated
   // routes in routes/admin/adminDocuments.ts, and are deleted once a
   // candidate application is verified or rejected.
-  const uploadsRoot = path.resolve(process.cwd(), 'uploads')
-  app.use('/uploads/photos', express.static(path.join(uploadsRoot, 'photos')))
-  app.use('/uploads/logos', express.static(path.join(uploadsRoot, 'logos')))
+  app.use('/uploads/photos', express.static(path.join(env.uploadsRoot, 'photos')))
+  app.use('/uploads/logos', express.static(path.join(env.uploadsRoot, 'logos')))
   app.use('/api', apiRouter)
 
   // In production this one process also serves the built React app (see
