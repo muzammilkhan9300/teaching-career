@@ -1,12 +1,17 @@
 import { Helmet } from 'react-helmet-async'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
-import { FormCard } from '@/components/ui/FormCard'
+import { FormCard, FormSectionTitle } from '@/components/ui/FormCard'
+import { RequireLogin } from '@/components/auth/RequireLogin'
 import { Button } from '@/components/ui/Button'
+import { TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
 import { useVacancy } from '@/lib/queries'
-import { api } from '@/lib/api'
+import { api, ApiError } from '@/lib/api'
+import { vacancyApplicationSchema, type VacancyApplicationInput } from '@/lib/validation'
 import { CapIcon, ChevronRightIcon, ClockIcon, PinIcon } from '@/components/icons'
 import type { Vacancy } from '@/types'
 
@@ -30,16 +35,27 @@ export default function VacancyDetail() {
   const { showToast } = useToast()
   const { data: vacancy, isPending } = useVacancy(id)
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<VacancyApplicationInput>({ resolver: zodResolver(vacancyApplicationSchema) })
+
   const applyMutation = useMutation({
-    mutationFn: () => api.postJson(`/vacancies/${id}/apply`, {}),
+    mutationFn: (data: VacancyApplicationInput) => api.postJson(`/vacancies/${id}/apply`, data),
     onSuccess: () => {
       showToast({ variant: 'success', title: 'Application sent', description: `You applied to ${vacancy?.title}.` })
       navigate('/registration-success?type=application')
     },
-    onError: () => {
-      showToast({ variant: 'error', title: 'Something went wrong', description: 'Please try applying again.' })
+    onError: (error) => {
+      const message = error instanceof ApiError ? error.message : 'Please try applying again.'
+      showToast({ variant: 'error', title: 'Something went wrong', description: message })
     },
   })
+
+  function onSubmit(data: VacancyApplicationInput) {
+    applyMutation.mutate(data)
+  }
 
   if (isPending) {
     return (
@@ -113,15 +129,56 @@ export default function VacancyDetail() {
 
             <hr className="my-8 border-line" />
 
-            <button
-              type="button"
-              onClick={() => applyMutation.mutate()}
-              disabled={applyMutation.isPending}
-              className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-teal px-8 py-3.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark disabled:opacity-60"
-            >
-              <CapIcon size={16} />
-              {applyMutation.isPending ? 'Applying…' : 'Apply for This Vacancy'}
-            </button>
+            <RequireLogin activity="apply for this vacancy">
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
+                <FormSectionTitle>Apply for This Vacancy</FormSectionTitle>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <TextField
+                    id="applicantName"
+                    label="Full Name"
+                    required
+                    placeholder="Your full name"
+                    error={errors.applicantName?.message}
+                    {...register('applicantName')}
+                  />
+                  <TextField
+                    id="applicantPhone"
+                    label="Phone / WhatsApp"
+                    required
+                    placeholder="03XX XXXXXXX"
+                    error={errors.applicantPhone?.message}
+                    {...register('applicantPhone')}
+                  />
+                  <TextField
+                    id="applicantEmail"
+                    type="email"
+                    label="Email"
+                    required
+                    placeholder="you@example.com"
+                    wrapperClassName="sm:col-span-2"
+                    error={errors.applicantEmail?.message}
+                    {...register('applicantEmail')}
+                  />
+                  <TextareaField
+                    id="coverNote"
+                    label="Message to the school"
+                    optional
+                    placeholder="Briefly introduce yourself (optional)"
+                    wrapperClassName="sm:col-span-2"
+                    error={errors.coverNote?.message}
+                    {...register('coverNote')}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={applyMutation.isPending}
+                  className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-teal px-8 py-3.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark disabled:opacity-60"
+                >
+                  <CapIcon size={16} />
+                  {applyMutation.isPending ? 'Submitting…' : 'Submit Application'}
+                </button>
+              </form>
+            </RequireLogin>
           </FormCard>
         </div>
       </section>

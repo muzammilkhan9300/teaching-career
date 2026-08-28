@@ -13,7 +13,7 @@ export async function getOrCreateSettings() {
   if (!settings) {
     settings = await Settings.create({
       _id: SETTINGS_SINGLETON_ID,
-      phone: '0312 8423676',
+      phone: '0312 8423576',
       phoneSecondary: '0300 0243546',
       whatsapp: '923128423676',
       email: 'info@teachingcareer.pk',

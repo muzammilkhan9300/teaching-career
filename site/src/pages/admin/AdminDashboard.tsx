@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
 import { useAdminStats } from '@/admin/adminQueries'
-import { useAdminAuth } from '@/admin/AdminAuthContext'
+import { useUserAuth } from '@/auth/UserAuthContext'
 import { VacancyIcon, BuildingIcon, UsersIcon, InboxIcon, SpinnerIcon } from '@/components/icons/admin'
 import type { ComponentType } from 'react'
 import type { LucideProps } from 'lucide-react'
@@ -44,7 +44,7 @@ const CARDS: StatCard[] = [
 ]
 
 export default function AdminDashboard() {
-  const { admin } = useAdminAuth()
+  const { user: admin } = useUserAuth()
   const { data: stats, isPending } = useAdminStats()
 
   return (

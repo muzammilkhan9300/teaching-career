@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAdminBlogPosts, useBlogPostMutations } from '@/admin/adminQueries'
-import { useAdminAuth } from '@/admin/AdminAuthContext'
+import { useUserAuth } from '@/auth/UserAuthContext'
 import { useTableControls } from '@/admin/useTableControls'
 import { DataTable, type Column } from '@/admin/components/DataTable'
 import { ListToolbar } from '@/admin/components/ListToolbar'
@@ -25,7 +25,7 @@ const FIELDS: FieldConfig[] = [
 export default function AdminBlogs() {
   const { data: posts, isPending } = useAdminBlogPosts()
   const { create, update, remove, runStatusAction } = useBlogPostMutations()
-  const { can } = useAdminAuth()
+  const { can } = useUserAuth()
   const { showToast } = useToast()
   const [editing, setEditing] = useState<BlogPost | 'new' | null>(null)
   const [formError, setFormError] = useState<string | null>(null)

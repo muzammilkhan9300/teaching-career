@@ -19,4 +19,17 @@ export const env = {
   ),
   jwtExpiresIn: required('JWT_EXPIRES_IN', '7d'),
   nodeEnv: required('NODE_ENV', 'development'),
+
+  // Optional — Google Sign-In stays disabled (routes respond 503) until both
+  // are set. Never fabricate values here; there is no working fallback.
+  googleClientId: process.env.GOOGLE_CLIENT_ID,
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  googleRedirectUri: process.env.GOOGLE_REDIRECT_URI,
+
+  // Optional — outgoing contact-form email stays disabled (silently skipped,
+  // the message is still saved to the database either way) until both are
+  // set. Never fabricate values here; there is no working fallback.
+  smtpUser: process.env.SMTP_USER,
+  smtpPass: process.env.SMTP_PASS,
+  contactRecipientEmail: required('CONTACT_RECIPIENT_EMAIL', 'itgraduate2025@gmail.com'),
 }

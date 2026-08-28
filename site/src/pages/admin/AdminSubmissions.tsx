@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useAdminSubmissions, useSubmissionMutations, type SubmissionRecord } from '@/admin/adminQueries'
+import { useAdminSubmissions, useSubmissionMutations, useAssignTutor, useAdminCandidates, type SubmissionRecord } from '@/admin/adminQueries'
 import { DataTable, type Column } from '@/admin/components/DataTable'
 import { StatusSelect } from '@/admin/components/StatusBadge'
+import { AssignTutorModal } from '@/admin/components/AssignTutorModal'
 import { useToast } from '@/components/ui/Toast'
 import { ApiError } from '@/lib/api'
-import { SpinnerIcon, TrashIcon } from '@/components/icons/admin'
+import { SpinnerIcon, TrashIcon, UserPlusIcon } from '@/components/icons/admin'
 
 export type SubmissionResource =
   | 'candidate-applications'
@@ -45,7 +47,14 @@ const RESOURCE_CONFIG: Record<SubmissionResource, ResourceConfig> = {
   'home-tutor-requests': {
     title: 'Home Tutor Requests',
     statusField: 'requestStatus',
-    columns: [textColumn('parentName', 'Parent'), textColumn('studentName', 'Student'), textColumn('subjectsNeeded', 'Subjects'), textColumn('parentCity', 'City'), dateColumn()],
+    columns: [
+      textColumn('parentName', 'Parent'),
+      textColumn('studentName', 'Student'),
+      textColumn('subjectsNeeded', 'Subjects'),
+      textColumn('parentCity', 'City'),
+      { key: 'assignedCandidateName', label: 'Assigned Tutor', render: (row) => (row.assignedCandidateName ? String(row.assignedCandidateName) : '—') },
+      dateColumn(),
+    ],
   },
   'contact-messages': {
     title: 'Contact Messages',
@@ -55,7 +64,13 @@ const RESOURCE_CONFIG: Record<SubmissionResource, ResourceConfig> = {
   'vacancy-applications': {
     title: 'Vacancy Applications',
     statusField: 'applicationStatus',
-    columns: [textColumn('vacancyTitle', 'Vacancy'), dateColumn()],
+    columns: [
+      textColumn('vacancyTitle', 'Vacancy'),
+      textColumn('applicantName', 'Applicant'),
+      textColumn('applicantEmail', 'Email'),
+      textColumn('applicantPhone', 'Phone'),
+      dateColumn(),
+    ],
   },
 }
 
@@ -63,7 +78,11 @@ export default function AdminSubmissions({ resource }: { resource: SubmissionRes
   const config = RESOURCE_CONFIG[resource]
   const { data, isPending } = useAdminSubmissions(resource)
   const { updateStatus, remove } = useSubmissionMutations(resource)
+  const assignTutor = useAssignTutor()
+  const isHomeTutor = resource === 'home-tutor-requests'
+  const { data: candidates } = useAdminCandidates()
   const { showToast } = useToast()
+  const [assigningRow, setAssigningRow] = useState<SubmissionRecord | null>(null)
 
   function handleDelete(row: SubmissionRecord) {
     if (!window.confirm('Delete this submission? This cannot be undone.')) return
@@ -71,6 +90,20 @@ export default function AdminSubmissions({ resource }: { resource: SubmissionRes
       onSuccess: () => showToast({ variant: 'success', title: 'Submission deleted' }),
       onError: (err) => showToast({ variant: 'error', title: 'Delete failed', description: err instanceof ApiError ? err.message : undefined }),
     })
+  }
+
+  function handleAssign(candidateId: string | null) {
+    if (!assigningRow) return
+    assignTutor.mutate(
+      { id: assigningRow.id, candidateId },
+      {
+        onSuccess: () => {
+          showToast({ variant: 'success', title: candidateId ? 'Tutor assigned' : 'Assignment removed' })
+          setAssigningRow(null)
+        },
+        onError: (err) => showToast({ variant: 'error', title: 'Assignment failed', description: err instanceof ApiError ? err.message : undefined }),
+      },
+    )
   }
 
   const columns: Column<SubmissionRecord>[] = [
@@ -111,12 +144,34 @@ export default function AdminSubmissions({ resource }: { resource: SubmissionRes
           rowKey={(row) => row.id}
           emptyMessage="No submissions yet."
           actions={(row) => (
-            <button type="button" onClick={() => handleDelete(row)} className="rounded-lg p-1.5 text-body hover:bg-red-50 hover:text-red-600" aria-label="Delete">
-              <TrashIcon size={16} />
-            </button>
+            <>
+              {isHomeTutor ? (
+                <button
+                  type="button"
+                  onClick={() => setAssigningRow(row)}
+                  className="rounded-lg p-1.5 text-body hover:bg-mint hover:text-teal-deep"
+                  aria-label="Assign tutor"
+                >
+                  <UserPlusIcon size={16} />
+                </button>
+              ) : null}
+              <button type="button" onClick={() => handleDelete(row)} className="rounded-lg p-1.5 text-body hover:bg-red-50 hover:text-red-600" aria-label="Delete">
+                <TrashIcon size={16} />
+              </button>
+            </>
           )}
         />
       )}
+
+      {assigningRow ? (
+        <AssignTutorModal
+          request={assigningRow}
+          candidates={candidates ?? []}
+          isSubmitting={assignTutor.isPending}
+          onAssign={handleAssign}
+          onClose={() => setAssigningRow(null)}
+        />
+      ) : null}
     </div>
   )
 }

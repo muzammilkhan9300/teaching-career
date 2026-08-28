@@ -1,19 +1,24 @@
+import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useCandidateApplications, useCandidateVerification, adminDocumentUrl } from '@/admin/adminQueries'
 import { useTableControls } from '@/admin/useTableControls'
 import { DataTable, type Column } from '@/admin/components/DataTable'
 import { ListToolbar } from '@/admin/components/ListToolbar'
 import { StatusBadge } from '@/admin/components/StatusBadge'
+import { RejectReasonModal } from '@/admin/components/RejectReasonModal'
 import { useToast } from '@/components/ui/Toast'
 import { ApiError } from '@/lib/api'
 import { SpinnerIcon } from '@/components/icons/admin'
 import { DocUploadIcon } from '@/components/icons'
 import type { SubmissionRecord } from '@/admin/adminQueries'
 
+const REVIEWABLE = new Set(['New', 'Reviewed', 'Resubmitted'])
+
 export default function AdminCandidateApplications() {
   const { data: applications, isPending } = useCandidateApplications()
   const { verify, reject } = useCandidateVerification()
   const { showToast } = useToast()
+  const [rejecting, setRejecting] = useState<SubmissionRecord | null>(null)
 
   const controls = useTableControls((applications ?? []) as SubmissionRecord[], {
     searchKeys: ['fullName', 'email', 'city', 'qualification'] as never,
@@ -21,19 +26,26 @@ export default function AdminCandidateApplications() {
   })
 
   function handleVerify(app: SubmissionRecord) {
-    if (!window.confirm(`Verify ${String(app.fullName)}? This creates a public candidate listing and permanently deletes their uploaded documents.`)) return
+    const verb = app.applicationStatus === 'Resubmitted' ? 'Verify the updated details for' : 'Verify'
+    if (!window.confirm(`${verb} ${String(app.fullName)}? This publishes/updates their candidate listing and permanently deletes their uploaded documents.`)) return
     verify.mutate(app.id, {
       onSuccess: () => showToast({ variant: 'success', title: 'Candidate verified', description: 'Documents deleted; listing published.' }),
       onError: (err) => showToast({ variant: 'error', title: 'Verification failed', description: err instanceof ApiError ? err.message : undefined }),
     })
   }
 
-  function handleReject(app: SubmissionRecord) {
-    if (!window.confirm(`Reject ${String(app.fullName)}? This permanently deletes their uploaded documents.`)) return
-    reject.mutate(app.id, {
-      onSuccess: () => showToast({ variant: 'info', title: 'Application rejected', description: 'Documents deleted.' }),
-      onError: (err) => showToast({ variant: 'error', title: 'Action failed', description: err instanceof ApiError ? err.message : undefined }),
-    })
+  function handleReject(reason: string) {
+    if (!rejecting) return
+    reject.mutate(
+      { id: rejecting.id, reason },
+      {
+        onSuccess: () => {
+          showToast({ variant: 'info', title: 'Application rejected', description: 'Documents deleted.' })
+          setRejecting(null)
+        },
+        onError: (err) => showToast({ variant: 'error', title: 'Action failed', description: err instanceof ApiError ? err.message : undefined }),
+      },
+    )
   }
 
   const columns: Column<SubmissionRecord>[] = [
@@ -69,10 +81,15 @@ export default function AdminCandidateApplications() {
     },
     { key: 'applicationStatus', label: 'Status', render: (r) => <StatusBadge status={String(r.applicationStatus)} /> },
     {
+      key: 'rejectionReason',
+      label: 'Rejection Reason',
+      render: (r) => (r.rejectionReason ? <span className="line-clamp-2 max-w-xs text-xs text-body">{String(r.rejectionReason)}</span> : '—'),
+    },
+    {
       key: 'createdAt',
       label: 'Submitted',
       sortable: true,
-      render: (r) => new Date(String(r.createdAt)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      render: (r) => new Date(String(r.submittedAt ?? r.createdAt)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
     },
   ]
 
@@ -104,11 +121,11 @@ export default function AdminCandidateApplications() {
           sortDir={controls.sortDir}
           onSort={(key) => controls.toggleSort(key as never)}
           actions={(row) =>
-            row.applicationStatus === 'New' || row.applicationStatus === 'Reviewed' ? (
+            REVIEWABLE.has(String(row.applicationStatus)) ? (
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => handleReject(row)}
+                  onClick={() => setRejecting(row)}
                   disabled={reject.isPending || verify.isPending}
                   className="rounded-full border-2 border-line px-3 py-1.5 text-xs font-bold text-navy transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-60"
                 >
@@ -127,6 +144,16 @@ export default function AdminCandidateApplications() {
           }
         />
       )}
+
+      {rejecting ? (
+        <RejectReasonModal
+          title={`Reject ${String(rejecting.fullName)}`}
+          description="This reason is shown to the candidate so they know what to fix before resubmitting. This also permanently deletes their uploaded documents."
+          isSubmitting={reject.isPending}
+          onSubmit={handleReject}
+          onClose={() => setRejecting(null)}
+        />
+      ) : null}
     </div>
   )
 }

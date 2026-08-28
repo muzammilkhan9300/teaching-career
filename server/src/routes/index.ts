@@ -9,7 +9,7 @@ import { candidateRegistrationsRouter } from './candidateRegistrations.js'
 import { schoolRegistrationsRouter } from './schoolRegistrations.js'
 import { homeTutorRequestsRouter } from './homeTutorRequests.js'
 import { contactMessagesRouter } from './contactMessages.js'
-import { adminAuthRouter } from './adminAuth.js'
+import { userAuthRouter } from './userAuth.js'
 import {
   adminVacanciesRouter,
   adminSchoolsRouter,
@@ -30,6 +30,7 @@ import { adminAuditLogsRouter } from './admin/adminAuditLogs.js'
 import { adminDocumentsRouter } from './admin/adminDocuments.js'
 import { adminCandidateVerificationRouter } from './admin/adminCandidateVerification.js'
 import { adminSchoolApprovalRouter } from './admin/adminSchoolApproval.js'
+import { adminHomeTutorAssignmentRouter } from './admin/adminHomeTutorAssignment.js'
 import { adminNotificationsRouter } from './admin/adminNotifications.js'
 import { adminReportsRouter } from './admin/adminReports.js'
 
@@ -48,7 +49,8 @@ apiRouter.use('/school-registrations', schoolRegistrationsRouter)
 apiRouter.use('/home-tutor-requests', homeTutorRequestsRouter)
 apiRouter.use('/contact-messages', contactMessagesRouter)
 
-apiRouter.use('/admin/auth', adminAuthRouter)
+apiRouter.use('/auth', userAuthRouter)
+
 apiRouter.use('/admin/stats', adminStatsRouter)
 apiRouter.use('/admin/reports', adminReportsRouter)
 apiRouter.use('/admin/settings', adminSettingsRouter)
@@ -67,6 +69,7 @@ apiRouter.use('/admin/candidate-applications', adminCandidateVerificationRouter)
 apiRouter.use('/admin/candidate-applications', adminCandidateApplicationsRouter)
 apiRouter.use('/admin/school-registrations', adminSchoolApprovalRouter)
 apiRouter.use('/admin/school-registrations', adminSchoolRegistrationsRouter)
+apiRouter.use('/admin/home-tutor-requests', adminHomeTutorAssignmentRouter)
 apiRouter.use('/admin/home-tutor-requests', adminHomeTutorRequestsRouter)
 apiRouter.use('/admin/contact-messages', adminContactMessagesRouter)
 apiRouter.use('/admin/vacancy-applications', adminVacancyApplicationsRouter)

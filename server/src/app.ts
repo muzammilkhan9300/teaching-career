@@ -11,6 +11,11 @@ import { notFoundHandler, errorHandler } from './middleware/errorHandler.js'
 export function createApp() {
   const app = express()
 
+  // Behind a reverse proxy in production, req.ip would otherwise resolve to
+  // the proxy's address instead of the real client — breaks rate limiting
+  // and audit-log IPs.
+  if (env.nodeEnv === 'production') app.set('trust proxy', 1)
+
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
   app.use(cors({ origin: env.clientOrigin, credentials: true }))
   app.use(morgan('dev'))

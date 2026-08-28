@@ -1,16 +1,19 @@
+import { useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from '@tanstack/react-query'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
 import { FormCard, FormSectionTitle } from '@/components/ui/FormCard'
+import { RequireLogin } from '@/components/auth/RequireLogin'
 import { ChoiceChip, ChoiceChipGroup, FileField, SelectField, TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
-import { api, ApiError } from '@/lib/api'
+import { ApiError } from '@/lib/api'
+import { useMyCandidateApplication, useMyCandidateApplicationMutations } from '@/lib/queries'
 import { candidateRegistrationSchema, type CandidateRegistrationInput } from '@/lib/validation'
-import { CapIcon, InfoIcon, LockIcon, PersonIcon } from '@/components/icons'
+import { AlertIcon, CapIcon, CheckCircleIcon, ClockIcon, InfoIcon, LockIcon, PersonIcon } from '@/components/icons'
+import type { MyCandidateApplication } from '@/types'
 
 const CITIES = ['Islamabad', 'Lahore', 'Karachi']
 const QUALIFICATIONS = ["Bachelor's", "Master's", 'M.Phil', 'PhD']
@@ -36,19 +39,105 @@ const CLASSES = [
   { label: 'Other', value: 'other' },
 ]
 
+const STATUS_COPY: Record<MyCandidateApplication['applicationStatus'], { icon: typeof PersonIcon; classes: string; title: string; text: string }> = {
+  New: {
+    icon: ClockIcon,
+    classes: 'bg-amber-50 text-amber-700',
+    title: 'Your application is under review',
+    text: "We're reviewing your profile and documents. You'll be able to edit them once a decision is made.",
+  },
+  Reviewed: {
+    icon: ClockIcon,
+    classes: 'bg-amber-50 text-amber-700',
+    title: 'Your application is under review',
+    text: "We're reviewing your profile and documents. You'll be able to edit them once a decision is made.",
+  },
+  Resubmitted: {
+    icon: ClockIcon,
+    classes: 'bg-amber-50 text-amber-700',
+    title: 'Your update is under review',
+    text: "We're reviewing your latest changes. You'll be able to edit again once a decision is made.",
+  },
+  Verified: {
+    icon: CheckCircleIcon,
+    classes: 'bg-mint text-teal-deep',
+    title: 'Your profile is verified and published',
+    text: 'Your candidate profile is live. You can update your details below — since your documents were reviewed and removed, you\'ll need to re-upload them, and changes go through a quick review before going live.',
+  },
+  Rejected: {
+    icon: AlertIcon,
+    classes: 'bg-red-50 text-red-600',
+    title: 'Your application needs changes',
+    text: 'An admin rejected this submission. Review the reason below, make the needed changes (including re-uploading your documents), and resubmit.',
+  },
+}
+
+function fillForm(data: CandidateRegistrationInput, app: MyCandidateApplication): CandidateRegistrationInput {
+  return {
+    ...data,
+    fullName: app.fullName,
+    email: app.email,
+    whatsapp: app.whatsapp,
+    city: app.city,
+    area: app.area,
+    gender: app.gender ?? '',
+    qualification: app.qualification,
+    degreeName: app.degreeName,
+    major: app.major,
+    institute: app.institute,
+    completionYear: app.completionYear ?? '',
+    isFresher: app.isFresher,
+    experienceYears: app.experienceYears ?? '',
+    experienceOrg: app.experienceOrg ?? '',
+    experienceDetails: app.experienceDetails ?? '',
+    teachWhere: app.teachWhere,
+    subjects: app.subjects,
+    subjectOther: app.subjectOther ?? '',
+    classes: app.classes,
+    classOther: app.classOther ?? '',
+    availability: app.availability ?? '',
+    preferredTime: app.preferredTime ?? '',
+    declaration: app.declaration,
+  }
+}
+
+function buildFormData(data: CandidateRegistrationInput) {
+  const formData = new FormData()
+  for (const [key, value] of Object.entries(data)) {
+    if (value === undefined || value === null) continue
+    if (key === 'declaration') {
+      formData.set(key, String(value))
+    } else if (Array.isArray(value)) {
+      formData.set(key, JSON.stringify(value))
+    } else if (value instanceof FileList) {
+      if (value[0]) formData.set(key, value[0])
+    } else {
+      formData.set(key, String(value))
+    }
+  }
+  return formData
+}
+
 export default function CandidateRegistration() {
   const navigate = useNavigate()
   const { showToast } = useToast()
+  const { data: myApplication, isLoading } = useMyCandidateApplication()
+  const { create, resubmit } = useMyCandidateApplicationMutations()
 
   const {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm<CandidateRegistrationInput>({
     resolver: zodResolver(candidateRegistrationSchema),
     defaultValues: { isFresher: 'yes', teachWhere: [], subjects: [], classes: [] },
   })
+
+  useEffect(() => {
+    if (myApplication) reset((current) => fillForm(current, myApplication))
+  }, [myApplication, reset])
 
   const isFresher = watch('isFresher')
   const teachWhere = watch('teachWhere') ?? []
@@ -59,35 +148,28 @@ export default function CandidateRegistration() {
   const experienceDocument = watch('experienceDocument')
   const policeVerification = watch('policeVerification')
 
-  const registerMutation = useMutation({
-    mutationFn: (data: CandidateRegistrationInput) => {
-      const formData = new FormData()
-      for (const [key, value] of Object.entries(data)) {
-        if (value === undefined || value === null) continue
-        if (key === 'declaration') {
-          formData.set(key, String(value))
-        } else if (Array.isArray(value)) {
-          formData.set(key, JSON.stringify(value))
-        } else if (value instanceof FileList) {
-          if (value[0]) formData.set(key, value[0])
-        } else {
-          formData.set(key, String(value))
-        }
-      }
-      return api.postForm(`/candidate-registrations`, formData)
-    },
-    onSuccess: () => {
-      showToast({ variant: 'success', title: 'Registration submitted', description: 'Thank you for registering as a candidate.' })
-      navigate('/registration-success?type=candidate')
-    },
-    onError: (error) => {
-      const message = error instanceof ApiError ? error.message : 'Please check your details and try again.'
-      showToast({ variant: 'error', title: 'Registration failed', description: message })
-    },
-  })
+  const isEditable = !myApplication || myApplication.applicationStatus === 'Verified' || myApplication.applicationStatus === 'Rejected'
+  const mutation = myApplication ? resubmit : create
 
   function onSubmit(data: CandidateRegistrationInput) {
-    registerMutation.mutate(data)
+    if (myApplication) {
+      if (!window.confirm('Resubmit your updated application for admin review?')) return
+    }
+    const wasFirstSubmission = !myApplication
+    mutation.mutate(buildFormData(data), {
+      onSuccess: () => {
+        if (wasFirstSubmission) {
+          showToast({ variant: 'success', title: 'Registration submitted', description: 'Thank you for registering as a candidate.' })
+          navigate('/registration-success?type=candidate')
+          return
+        }
+        showToast({ variant: 'success', title: 'Resubmitted for review', description: "We'll notify you once it's reviewed." })
+      },
+      onError: (error) => {
+        const message = error instanceof ApiError ? error.message : 'Please check your details and try again.'
+        showToast({ variant: 'error', title: 'Something went wrong', description: message })
+      },
+    })
   }
 
   return (
@@ -107,13 +189,39 @@ export default function CandidateRegistration() {
 
       <section className="py-16">
         <div className="tc-container">
+          <RequireLogin activity="register as a candidate">
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <span className="h-10 w-10 animate-spin rounded-full border-4 border-mint border-t-teal" aria-label="Loading" />
+            </div>
+          ) : (
           <FormCard>
+            {myApplication ? (
+              <div className={`mb-8 flex flex-col gap-2 rounded-2xl p-5 ${STATUS_COPY[myApplication.applicationStatus].classes}`}>
+                <div className="flex items-center gap-2 font-extrabold">
+                  {(() => {
+                    const Icon = STATUS_COPY[myApplication.applicationStatus].icon
+                    return <Icon size={18} />
+                  })()}
+                  {STATUS_COPY[myApplication.applicationStatus].title}
+                </div>
+                <p className="text-sm">{STATUS_COPY[myApplication.applicationStatus].text}</p>
+                {myApplication.applicationStatus === 'Rejected' && myApplication.rejectionReason ? (
+                  <p className="mt-1 rounded-xl bg-white/60 p-3 text-sm font-medium">
+                    <span className="font-extrabold">Admin feedback: </span>
+                    {myApplication.rejectionReason}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {isEditable ? (
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8" noValidate>
               <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
                   <h2 className="flex items-center gap-2 text-xl font-extrabold text-navy">
                     <PersonIcon size={20} className="text-teal-deep" />
-                    Candidate Registration Form
+                    {myApplication ? 'Edit Your Application' : 'Candidate Registration Form'}
                   </h2>
                   <p className="mt-1 text-sm text-body">Please fill in the details below so we can review your profile.</p>
                   <p className="text-sm text-body">Profile photo is optional — a passport-size, professional-looking photo is preferred.</p>
@@ -156,7 +264,7 @@ export default function CandidateRegistration() {
                     id="degreeDocument"
                     label="Degree / Qualification Document"
                     required
-                    hint="PDF, JPG, PNG (Max 5MB)"
+                    hint={myApplication ? 'Your previous document was removed after review — please re-upload it. PDF, JPG, PNG (Max 5MB)' : 'PDF, JPG, PNG (Max 5MB)'}
                     accept=".pdf,image/png,image/jpeg"
                     fileName={degreeDocument?.[0]?.name}
                     error={errors.degreeDocument?.message as string | undefined}
@@ -167,7 +275,7 @@ export default function CandidateRegistration() {
 
               <div className="flex flex-col gap-5">
                 <FormSectionTitle>Teaching Experience</FormSectionTitle>
-                <ChoiceChipGroup legend="Are you a Fresher?" required>
+                <ChoiceChipGroup legend="Are you a Fresher?" required error={errors.isFresher?.message}>
                   <ChoiceChip type="radio" id="fresher-yes" value="yes" label="Yes" {...register('isFresher')} />
                   <ChoiceChip type="radio" id="fresher-no" value="no" label="No" {...register('isFresher')} />
                 </ChoiceChipGroup>
@@ -180,7 +288,7 @@ export default function CandidateRegistration() {
                       id="experienceDocument"
                       label="Experience Letter / Proof of Experience"
                       required
-                      hint="PDF, JPG, PNG (Max 5MB)"
+                      hint={myApplication ? 'Your previous document was removed after review — please re-upload it. PDF, JPG, PNG (Max 5MB)' : 'PDF, JPG, PNG (Max 5MB)'}
                       accept=".pdf,image/png,image/jpeg"
                       fileName={experienceDocument?.[0]?.name}
                       error={errors.experienceDocument?.message as string | undefined}
@@ -288,11 +396,11 @@ export default function CandidateRegistration() {
               <div className="flex flex-col items-start gap-3">
                 <button
                   type="submit"
-                  disabled={registerMutation.isPending}
+                  disabled={mutation.isPending}
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-teal px-8 py-3.5 text-sm font-bold text-white shadow-tc transition hover:bg-teal-dark disabled:opacity-60"
                 >
                   <CapIcon size={16} />
-                  {registerMutation.isPending ? 'Submitting…' : 'Register as a Candidate'}
+                  {mutation.isPending ? 'Submitting…' : myApplication ? 'Update & Resubmit for Review' : 'Register as a Candidate'}
                 </button>
                 <p className="flex items-center gap-1.5 text-xs text-body">
                   <LockIcon size={12} />
@@ -300,7 +408,16 @@ export default function CandidateRegistration() {
                 </p>
               </div>
             </form>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-line p-6 text-sm text-body">
+                <p className="font-semibold text-navy">{myApplication!.fullName}</p>
+                <p className="mt-1">{myApplication!.city}, {myApplication!.area}</p>
+                <p className="mt-3">Editing is disabled while this application is awaiting a decision.</p>
+              </div>
+            )}
           </FormCard>
+          )}
+          </RequireLogin>
         </div>
       </section>
     </>

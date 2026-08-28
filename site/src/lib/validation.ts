@@ -13,6 +13,7 @@ function fileExt(files: FileList) {
 function optionalFile(maxBytes: number, allowedExts: string[]) {
   return z
     .custom<FileList | undefined>()
+    .optional()
     .refine((files) => !files || files.length === 0 || files[0].size <= maxBytes, {
       message: `File is too large. Max ${Math.round(maxBytes / 1024 / 1024)}MB.`,
     })
@@ -123,3 +124,51 @@ export const contactMessageSchema = z.object({
 })
 
 export type ContactMessageInput = z.infer<typeof contactMessageSchema>
+
+export const vacancyApplicationSchema = z.object({
+  applicantName: z.string().min(2, 'Please enter your full name.'),
+  applicantEmail: z.string().min(1, 'Please enter your email.').email('Please enter a valid email address.'),
+  applicantPhone: z.string().min(7, 'Please enter a valid phone number.'),
+  coverNote: z.string().optional(),
+})
+
+export type VacancyApplicationInput = z.infer<typeof vacancyApplicationSchema>
+
+export const registerSchema = z
+  .object({
+    name: z.string().min(2, 'Please enter your name.'),
+    email: z.string().min(1, 'Please enter your email.').email('Please enter a valid email address.'),
+    password: z.string().min(8, 'Password must be at least 8 characters.'),
+    confirmPassword: z.string().min(1, 'Please confirm your password.'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match.',
+    path: ['confirmPassword'],
+  })
+
+export type RegisterInput = z.infer<typeof registerSchema>
+
+export const loginSchema = z.object({
+  email: z.string().min(1, 'Please enter your email.').email('Please enter a valid email address.'),
+  password: z.string().min(1, 'Please enter your password.'),
+})
+
+export type LoginInput = z.infer<typeof loginSchema>
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().min(1, 'Please enter your email.').email('Please enter a valid email address.'),
+})
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+
+export const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'Password must be at least 8 characters.'),
+    confirmPassword: z.string().min(1, 'Please confirm your password.'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match.',
+    path: ['confirmPassword'],
+  })
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>

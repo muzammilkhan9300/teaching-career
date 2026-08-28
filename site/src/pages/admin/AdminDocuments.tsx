@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAdminPendingDocuments, useCandidateVerification, adminDocumentUrl, type SubmissionRecord } from '@/admin/adminQueries'
+import { RejectReasonModal } from '@/admin/components/RejectReasonModal'
 import { useToast } from '@/components/ui/Toast'
 import { ApiError } from '@/lib/api'
 import { SpinnerIcon } from '@/components/icons/admin'
@@ -15,6 +17,7 @@ export default function AdminDocuments() {
   const { data: applications, isPending } = useAdminPendingDocuments()
   const { verify, reject } = useCandidateVerification()
   const { showToast } = useToast()
+  const [rejecting, setRejecting] = useState<SubmissionRecord | null>(null)
 
   function handleVerify(app: SubmissionRecord) {
     if (!window.confirm(`Verify ${app.fullName as string}? This creates a public candidate listing and permanently deletes their uploaded documents.`)) return
@@ -24,12 +27,18 @@ export default function AdminDocuments() {
     })
   }
 
-  function handleReject(app: SubmissionRecord) {
-    if (!window.confirm(`Reject ${app.fullName as string}? This permanently deletes their uploaded documents.`)) return
-    reject.mutate(app.id, {
-      onSuccess: () => showToast({ variant: 'info', title: 'Application rejected', description: 'Documents deleted.' }),
-      onError: (err) => showToast({ variant: 'error', title: 'Action failed', description: err instanceof ApiError ? err.message : undefined }),
-    })
+  function handleReject(reason: string) {
+    if (!rejecting) return
+    reject.mutate(
+      { id: rejecting.id, reason },
+      {
+        onSuccess: () => {
+          showToast({ variant: 'info', title: 'Application rejected', description: 'Documents deleted.' })
+          setRejecting(null)
+        },
+        onError: (err) => showToast({ variant: 'error', title: 'Action failed', description: err instanceof ApiError ? err.message : undefined }),
+      },
+    )
   }
 
   return (
@@ -74,7 +83,7 @@ export default function AdminDocuments() {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => handleReject(app)}
+                    onClick={() => setRejecting(app)}
                     disabled={reject.isPending || verify.isPending}
                     className="rounded-full border-2 border-line px-4 py-2 text-xs font-bold text-navy transition hover:bg-red-50 hover:border-red-200 hover:text-red-600 disabled:opacity-60"
                   >
@@ -112,6 +121,16 @@ export default function AdminDocuments() {
           ))}
         </div>
       )}
+
+      {rejecting ? (
+        <RejectReasonModal
+          title={`Reject ${String(rejecting.fullName)}`}
+          description="This reason is shown to the candidate so they know what to fix before resubmitting. This also permanently deletes their uploaded documents."
+          isSubmitting={reject.isPending}
+          onSubmit={handleReject}
+          onClose={() => setRejecting(null)}
+        />
+      ) : null}
     </div>
   )
 }

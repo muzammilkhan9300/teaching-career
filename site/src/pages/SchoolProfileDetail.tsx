@@ -3,12 +3,15 @@ import { Link, useParams } from 'react-router-dom'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { FormCard } from '@/components/ui/FormCard'
 import { Button } from '@/components/ui/Button'
-import { useSchool } from '@/lib/queries'
+import { useMySchoolRegistration, useSchool } from '@/lib/queries'
+import { VacancyManager } from '@/components/school-owner/VacancyManager'
 import { CheckCircleIcon, ChevronRightIcon, PinIcon, ShieldIcon } from '@/components/icons'
 
 export default function SchoolProfileDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: school, isPending } = useSchool(id)
+  const { data: myRegistration } = useMySchoolRegistration()
+  const isOwner = Boolean(school) && myRegistration?.publishedSchoolId === id
 
   if (isPending) {
     return (
@@ -68,6 +71,18 @@ export default function SchoolProfileDetail() {
               </div>
             </div>
 
+            {isOwner ? (
+              <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl bg-mint/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="flex items-center gap-2 text-sm font-semibold text-navy">
+                  <ShieldIcon size={16} className="shrink-0 text-teal-deep" />
+                  You manage this school&rsquo;s profile.
+                </p>
+                <Button to="/school-registration" variant="outline" className="shrink-0 px-4 py-2 text-xs">
+                  Edit School Details
+                </Button>
+              </div>
+            ) : null}
+
             <hr className="my-8 border-line" />
 
             <div>
@@ -78,8 +93,12 @@ export default function SchoolProfileDetail() {
             <hr className="my-8 border-line" />
 
             <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-body">Active Vacancies</p>
-              {activeVacancies.length > 0 ? (
+              <p className="mb-3 text-xs font-bold uppercase tracking-wide text-body">
+                {isOwner ? 'Manage Your Vacancies' : 'Active Vacancies'}
+              </p>
+              {isOwner ? (
+                <VacancyManager />
+              ) : activeVacancies.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {activeVacancies.map((v) => (
                     <Link
@@ -101,14 +120,17 @@ export default function SchoolProfileDetail() {
               )}
             </div>
 
-            <hr className="my-8 border-line" />
-
-            <div className="flex flex-col items-start gap-4 rounded-2xl bg-mint/50 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="flex items-start gap-2 text-sm text-body">
-                <ShieldIcon size={16} className="mt-0.5 shrink-0 text-teal-deep" />
-                Apply directly to a vacancy above — TeachingCareer manages the introduction from there.
-              </p>
-            </div>
+            {isOwner ? null : (
+              <>
+                <hr className="my-8 border-line" />
+                <div className="flex flex-col items-start gap-4 rounded-2xl bg-mint/50 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="flex items-start gap-2 text-sm text-body">
+                    <ShieldIcon size={16} className="mt-0.5 shrink-0 text-teal-deep" />
+                    Apply directly to a vacancy above — TeachingCareer manages the introduction from there.
+                  </p>
+                </div>
+              </>
+            )}
           </FormCard>
         </div>
       </section>

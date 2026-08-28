@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { WhatsappButton } from '@/components/layout/WhatsappButton'
 
 export function RootLayout() {
   const location = useLocation()
@@ -17,6 +18,7 @@ export function RootLayout() {
         <Outlet />
       </main>
       <Footer />
+      <WhatsappButton />
     </div>
   )
 }

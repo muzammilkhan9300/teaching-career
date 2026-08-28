@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
-import { ChevronRightIcon, CloseIcon, MenuIcon, PhoneIcon } from '@/components/icons'
-import { useSettings } from '@/lib/queries'
-
-const FALLBACK_PHONE = '0312 8423676'
+import { ChevronRightIcon, CloseIcon, LogOutIcon, MenuIcon, PersonIcon } from '@/components/icons'
+import { useUserAuth } from '@/auth/UserAuthContext'
 
 interface NavLeaf {
   label: string
@@ -45,8 +43,7 @@ function isParent(entry: NavEntry): entry is NavParent {
 }
 
 export function Header() {
-  const { data: settings } = useSettings()
-  const phone = settings?.phone ?? FALLBACK_PHONE
+  const { user, isAuthenticated, logout } = useUserAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openMobileMenus, setOpenMobileMenus] = useState<string[]>([])
   const location = useLocation()
@@ -122,18 +119,58 @@ export function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-4">
-          <a
-            href={`tel:${phone.replace(/\s+/g, '')}`}
-            className="hidden items-center gap-2 text-navy sm:flex"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-mint text-teal-deep">
-              <PhoneIcon size={16} />
-            </span>
-            <span className="flex flex-col leading-tight">
-              <span className="text-sm font-bold">{phone}</span>
-              <span className="text-[11px] text-body">24/7 Availability</span>
-            </span>
-          </a>
+          {isAuthenticated && user ? (
+            <div className="group relative hidden lg:block">
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-full border border-line py-1.5 pl-1.5 pr-3 text-sm font-semibold text-navy transition hover:border-teal"
+              >
+                <span className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-mint text-teal-deep">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <PersonIcon size={16} />
+                  )}
+                </span>
+                {user.name.split(' ')[0]}
+              </button>
+              <ul className="invisible absolute right-0 top-full z-20 w-48 translate-y-2 rounded-2xl border border-line bg-white p-2 opacity-0 shadow-tc-lg transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+                <li>
+                  <Link to="/profile" className="block rounded-xl px-4 py-2.5 text-sm font-medium text-navy transition hover:bg-mint hover:text-teal-deep">
+                    My Profile
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => logout()}
+                    className="flex w-full items-center gap-2 rounded-xl px-4 py-2.5 text-left text-sm font-medium text-red-600 transition hover:bg-red-50"
+                  >
+                    <LogOutIcon size={14} />
+                    Log Out
+                  </button>
+                </li>
+              </ul>
+            </div>
+          ) : (
+            <div className="hidden items-center gap-2 lg:flex">
+              <Link
+                to="/login"
+                state={{ backgroundLocation: location }}
+                className="flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-navy transition hover:border-teal hover:text-teal"
+              >
+                <PersonIcon size={15} />
+                Log In
+              </Link>
+              <Link
+                to="/signup"
+                state={{ backgroundLocation: location }}
+                className="flex items-center gap-2 rounded-full bg-teal px-5 py-2.5 text-sm font-semibold text-white shadow-tc transition hover:bg-teal-dark"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
 
           <button
             type="button"
@@ -202,10 +239,50 @@ export function Header() {
               )
             })}
             <li className="mt-2 border-t border-line pt-3">
-              <a href={`tel:${phone.replace(/\s+/g, '')}`} className="flex items-center gap-2 px-3 text-sm font-bold text-navy">
-                <PhoneIcon size={16} className="text-teal-deep" />
-                {phone}
-              </a>
+              {isAuthenticated && user ? (
+                <div className="flex flex-col gap-1">
+                  <Link
+                    to="/profile"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-navy"
+                  >
+                    <PersonIcon size={16} className="text-teal-deep" />
+                    My Profile ({user.name.split(' ')[0]})
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout()
+                      setMobileOpen(false)
+                    }}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-red-600"
+                  >
+                    <LogOutIcon size={16} />
+                    Log Out
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <Link
+                    to="/login"
+                    state={{ backgroundLocation: location }}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-navy"
+                  >
+                    <PersonIcon size={16} className="text-teal-deep" />
+                    Log In
+                  </Link>
+                  <Link
+                    to="/signup"
+                    state={{ backgroundLocation: location }}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold text-teal-deep"
+                  >
+                    <PersonIcon size={16} />
+                    Sign Up
+                  </Link>
+                </div>
+              )}
             </li>
           </ul>
         </nav>

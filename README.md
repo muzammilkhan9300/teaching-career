@@ -20,21 +20,27 @@ npm install                 # installs `concurrently` for the root dev script
 
 npm run seed                # populate MongoDB with demo vacancies/schools/candidates/blog posts
 cd server && npm run create-admin && cd ..   # bootstrap the admin account from server/.env
-npm run dev                 # starts the API (port 4000) and the client (port 5173) together
+npm run dev                 # starts the API (port 4000) and the client (port 5174) together
 ```
 
 Or run each independently:
 
 ```bash
 cd server && npm run dev    # http://localhost:4000
-cd site && npm run dev      # http://localhost:5173 (proxies /api and /uploads to the server)
+cd site && npm run dev      # http://localhost:5174 (proxies /api and /uploads to the server)
 ```
 
-## Admin panel
+## Accounts & the admin panel
 
-`http://localhost:5173/admin/login` — sign in with the `ADMIN_EMAIL`/`ADMIN_PASSWORD` set in
-`server/.env` (see `server/.env.example`) before running `npm run create-admin`; that account is
-always a `super_admin`. From there:
+There is one account system for the whole app — public visitors and staff are both a `User`,
+distinguished only by `role` (`user` / `moderator` / `admin` / `super_admin`). Everyone signs in
+through the same `/login` page; a `role` of anything above `user` additionally unlocks
+`/admin` and every `/api/admin/*` route (enforced server-side, not just hidden in the UI — a
+`user`-role account gets a 403 from the API and an in-app "Access Denied" screen, not just a
+missing button).
+
+Run `cd server && npm run create-admin` (bootstraps a `super_admin` from `ADMIN_EMAIL`/
+`ADMIN_PASSWORD` in `server/.env`, see `server/.env.example`) before sign-in. From `/admin`:
 
 - **Dashboard** — live stats and pending-review counts pulled straight from MongoDB.
 - **Vacancies / Schools / Candidates / Blogs / Services** — full CRUD, plus reversible

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api'
-import type { AdminUser } from './AdminAuthContext'
+import type { SiteUser } from '@/auth/UserAuthContext'
 import type { Candidate, School, Service, Settings, Vacancy, BlogPost } from '@/types'
 
 // ---- Managed listings (Vacancy / School / Candidate / BlogPost / Service): admin CRUD ----
@@ -114,6 +114,19 @@ export function useSubmissionMutations(resource: string) {
   return { updateStatus, remove }
 }
 
+// ---- Home tutor requests: assign a verified candidate as the tutor ----
+
+export function useAssignTutor() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, candidateId }: { id: string; candidateId: string | null }) =>
+      api.patchJson<SubmissionRecord>(`/admin/home-tutor-requests/${id}/assign`, { candidateId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'home-tutor-requests'] })
+    },
+  })
+}
+
 // ---- Candidate verification & school approval (promotion workflow) ----
 
 export function useCandidateApplications() {
@@ -134,7 +147,7 @@ export function useCandidateVerification() {
     onSuccess: invalidate,
   })
   const reject = useMutation({
-    mutationFn: (id: string) => api.postJson(`/admin/candidate-applications/${id}/reject`, {}),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => api.postJson(`/admin/candidate-applications/${id}/reject`, { reason }),
     onSuccess: invalidate,
   })
 
@@ -158,7 +171,7 @@ export function useSchoolApproval() {
     onSuccess: invalidate,
   })
   const reject = useMutation({
-    mutationFn: (id: string) => api.postJson(`/admin/school-registrations/${id}/reject`, {}),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => api.postJson(`/admin/school-registrations/${id}/reject`, { reason }),
     onSuccess: invalidate,
   })
 
@@ -220,7 +233,7 @@ export function useNotificationMutations() {
 // ---- Staff & permissions ----
 
 export function useAdminStaff() {
-  return useQuery({ queryKey: ['admin', 'staff'], queryFn: () => api.get<AdminUser[]>('/admin/staff') })
+  return useQuery({ queryKey: ['admin', 'staff'], queryFn: () => api.get<SiteUser[]>('/admin/staff') })
 }
 
 export function useStaffMutations() {
@@ -229,12 +242,12 @@ export function useStaffMutations() {
 
   const create = useMutation({
     mutationFn: (data: { name: string; email: string; password: string; role: string }) =>
-      api.postJson<AdminUser>('/admin/staff', data),
+      api.postJson<SiteUser>('/admin/staff', data),
     onSuccess: invalidate,
   })
   const update = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      api.putJson<AdminUser>(`/admin/staff/${id}`, data),
+      api.putJson<SiteUser>(`/admin/staff/${id}`, data),
     onSuccess: invalidate,
   })
 
@@ -250,6 +263,7 @@ export interface AuditLogRecord {
   resource: string
   resourceId?: string
   details?: string
+  ip?: string
   createdAt: string
 }
 

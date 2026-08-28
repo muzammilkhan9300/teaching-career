@@ -1,18 +1,23 @@
+import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useSchoolRegistrations, useSchoolApproval } from '@/admin/adminQueries'
 import { useTableControls } from '@/admin/useTableControls'
 import { DataTable, type Column } from '@/admin/components/DataTable'
 import { ListToolbar } from '@/admin/components/ListToolbar'
 import { StatusBadge } from '@/admin/components/StatusBadge'
+import { RejectReasonModal } from '@/admin/components/RejectReasonModal'
 import { useToast } from '@/components/ui/Toast'
 import { ApiError } from '@/lib/api'
 import { SpinnerIcon } from '@/components/icons/admin'
 import type { SubmissionRecord } from '@/admin/adminQueries'
 
+const REVIEWABLE = new Set(['Pending', 'Resubmitted'])
+
 export default function AdminSchoolRegistrations() {
   const { data: registrations, isPending } = useSchoolRegistrations()
   const { approve, reject } = useSchoolApproval()
   const { showToast } = useToast()
+  const [rejecting, setRejecting] = useState<SubmissionRecord | null>(null)
 
   const controls = useTableControls((registrations ?? []) as SubmissionRecord[], {
     searchKeys: ['schoolName', 'schoolCity', 'schoolWhatsapp'] as never,
@@ -20,19 +25,26 @@ export default function AdminSchoolRegistrations() {
   })
 
   function handleApprove(reg: SubmissionRecord) {
-    if (!window.confirm(`Approve ${String(reg.schoolName)}? This creates a public school listing.`)) return
+    const verb = reg.registrationStatus === 'Resubmitted' ? 'Approve the updated details for' : 'Approve'
+    if (!window.confirm(`${verb} ${String(reg.schoolName)}? This publishes the listing.`)) return
     approve.mutate(reg.id, {
       onSuccess: () => showToast({ variant: 'success', title: 'School approved', description: 'Listing published.' }),
       onError: (err) => showToast({ variant: 'error', title: 'Approval failed', description: err instanceof ApiError ? err.message : undefined }),
     })
   }
 
-  function handleReject(reg: SubmissionRecord) {
-    if (!window.confirm(`Reject ${String(reg.schoolName)}?`)) return
-    reject.mutate(reg.id, {
-      onSuccess: () => showToast({ variant: 'info', title: 'Registration rejected' }),
-      onError: (err) => showToast({ variant: 'error', title: 'Action failed', description: err instanceof ApiError ? err.message : undefined }),
-    })
+  function handleReject(reason: string) {
+    if (!rejecting) return
+    reject.mutate(
+      { id: rejecting.id, reason },
+      {
+        onSuccess: () => {
+          showToast({ variant: 'info', title: 'Registration rejected' })
+          setRejecting(null)
+        },
+        onError: (err) => showToast({ variant: 'error', title: 'Action failed', description: err instanceof ApiError ? err.message : undefined }),
+      },
+    )
   }
 
   const columns: Column<SubmissionRecord>[] = [
@@ -42,10 +54,15 @@ export default function AdminSchoolRegistrations() {
     { key: 'schoolBoard', label: 'Board', render: (r) => String(r.schoolBoard ?? '—') },
     { key: 'registrationStatus', label: 'Status', render: (r) => <StatusBadge status={String(r.registrationStatus)} /> },
     {
+      key: 'rejectionReason',
+      label: 'Rejection Reason',
+      render: (r) => (r.rejectionReason ? <span className="line-clamp-2 max-w-xs text-xs text-body">{String(r.rejectionReason)}</span> : '—'),
+    },
+    {
       key: 'createdAt',
       label: 'Submitted',
       sortable: true,
-      render: (r) => new Date(String(r.createdAt)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      render: (r) => new Date(String(r.submittedAt ?? r.createdAt)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
     },
   ]
 
@@ -57,7 +74,7 @@ export default function AdminSchoolRegistrations() {
 
       <div>
         <h1 className="text-2xl font-extrabold text-navy">School Registrations</h1>
-        <p className="text-sm text-body">Review submissions and approve or reject school registrations.</p>
+        <p className="text-sm text-body">Review submissions and resubmissions, and approve or reject school registrations.</p>
       </div>
 
       <ListToolbar search={controls.search} onSearchChange={controls.setSearch} placeholder="Search by school name, city, or WhatsApp…" resultCount={controls.totalCount} />
@@ -77,11 +94,11 @@ export default function AdminSchoolRegistrations() {
           sortDir={controls.sortDir}
           onSort={(key) => controls.toggleSort(key as never)}
           actions={(row) =>
-            row.registrationStatus === 'New' || row.registrationStatus === 'Reviewed' ? (
+            REVIEWABLE.has(String(row.registrationStatus)) ? (
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => handleReject(row)}
+                  onClick={() => setRejecting(row)}
                   disabled={approve.isPending || reject.isPending}
                   className="rounded-full border-2 border-line px-3 py-1.5 text-xs font-bold text-navy transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-60"
                 >
@@ -100,6 +117,16 @@ export default function AdminSchoolRegistrations() {
           }
         />
       )}
+
+      {rejecting ? (
+        <RejectReasonModal
+          title={`Reject ${String(rejecting.schoolName)}`}
+          description="This reason is shown to the school owner so they know what to fix before resubmitting."
+          isSubmitting={reject.isPending}
+          onSubmit={handleReject}
+          onClose={() => setRejecting(null)}
+        />
+      ) : null}
     </div>
   )
 }

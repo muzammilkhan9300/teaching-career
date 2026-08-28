@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
 import { connectDb } from '../db/connect.js'
-import { Admin, hashPassword } from '../models/Admin.js'
+import { User, hashPassword } from '../models/User.js'
 
 async function main() {
   const email = process.env.ADMIN_EMAIL
@@ -19,9 +19,9 @@ async function main() {
   const passwordHash = await hashPassword(password)
   // The bootstrap account is always a super_admin — otherwise nobody could
   // ever create further staff accounts (that action itself requires one).
-  const admin = await Admin.findOneAndUpdate(
+  const admin = await User.findOneAndUpdate(
     { email: email.toLowerCase() },
-    { email: email.toLowerCase(), passwordHash, name, role: 'super_admin', active: true },
+    { email: email.toLowerCase(), passwordHash, name, role: 'super_admin', authProvider: 'local', active: true },
     { upsert: true, new: true, setDefaultsOnInsert: true },
   )
 

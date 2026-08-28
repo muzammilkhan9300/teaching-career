@@ -5,6 +5,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
 import { FormCard } from '@/components/ui/FormCard'
+import { RequireLogin } from '@/components/auth/RequireLogin'
 import { TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
 import { api, ApiError } from '@/lib/api'
@@ -12,7 +13,7 @@ import { useSettings } from '@/lib/queries'
 import { contactMessageSchema, type ContactMessageInput } from '@/lib/validation'
 import { MailIcon, PhoneIcon, SendIcon, WhatsappIcon } from '@/components/icons'
 
-const FALLBACK = { phone: '0312 8423676', phoneSecondary: '0300 0243546', whatsapp: '923128423676' }
+const FALLBACK = { phone: '0312 8423576', phoneSecondary: '0300 0243546', whatsapp: '923128423676' }
 
 export default function Contact() {
   const { showToast } = useToast()
@@ -86,44 +87,46 @@ export default function Contact() {
 
       <section className="py-16">
         <div className="tc-container">
-          <FormCard>
-            <div className="mb-6 flex flex-col gap-2 text-center">
-              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-mint text-teal-deep">
-                <MailIcon size={22} />
-              </span>
-              <h2 className="text-xl font-extrabold text-navy">Send Us a Message</h2>
-              <p className="text-sm text-body">Why reach out to us? Questions, feedback, or partnership ideas — we read every message.</p>
-            </div>
+          <RequireLogin activity="send us a message">
+            <FormCard>
+              <div className="mb-6 flex flex-col gap-2 text-center">
+                <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-mint text-teal-deep">
+                  <MailIcon size={22} />
+                </span>
+                <h2 className="text-xl font-extrabold text-navy">Send Us a Message</h2>
+                <p className="text-sm text-body">Why reach out to us? Questions, feedback, or partnership ideas — we read every message.</p>
+              </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
-              <TextField label="Full Name" required placeholder="Enter your full name" error={errors.name?.message} {...register('name')} />
-              <TextField
-                label="Email Address"
-                type="email"
-                required
-                placeholder="Enter your email address"
-                error={errors.email?.message}
-                {...register('email')}
-              />
-              <TextareaField
-                label="Message"
-                required
-                placeholder="How can we help?"
-                rows={5}
-                error={errors.message?.message}
-                {...register('message')}
-              />
+              <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" noValidate>
+                <TextField label="Full Name" required placeholder="Enter your full name" error={errors.name?.message} {...register('name')} />
+                <TextField
+                  label="Email Address"
+                  type="email"
+                  required
+                  placeholder="Enter your email address"
+                  error={errors.email?.message}
+                  {...register('email')}
+                />
+                <TextareaField
+                  label="Message"
+                  required
+                  placeholder="How can we help?"
+                  rows={5}
+                  error={errors.message?.message}
+                  {...register('message')}
+                />
 
-              <button
-                type="submit"
-                disabled={sendMutation.isPending}
-                className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-teal px-6 py-3 text-sm font-bold text-white transition hover:bg-teal-dark disabled:opacity-60"
-              >
-                <SendIcon size={15} />
-                {sendMutation.isPending ? 'Sending…' : 'Send Message'}
-              </button>
-            </form>
-          </FormCard>
+                <button
+                  type="submit"
+                  disabled={sendMutation.isPending}
+                  className="inline-flex items-center justify-center gap-2 self-start rounded-full bg-teal px-6 py-3 text-sm font-bold text-white transition hover:bg-teal-dark disabled:opacity-60"
+                >
+                  <SendIcon size={15} />
+                  {sendMutation.isPending ? 'Sending…' : 'Send Message'}
+                </button>
+              </form>
+            </FormCard>
+          </RequireLogin>
         </div>
       </section>
     </>

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useAdminStaff, useStaffMutations } from '@/admin/adminQueries'
-import { useAdminAuth, type AdminUser } from '@/admin/AdminAuthContext'
+import { useUserAuth } from '@/auth/UserAuthContext'
+import type { SiteUser } from '@/auth/UserAuthContext'
 import { DataTable, type Column } from '@/admin/components/DataTable'
 import { StatusBadge } from '@/admin/components/StatusBadge'
 import { ResourceFormModal, type FieldConfig } from '@/admin/components/ResourceFormModal'
@@ -29,12 +30,12 @@ const EDIT_FIELDS: FieldConfig[] = [
 export default function AdminStaff() {
   const { data: staff, isPending } = useAdminStaff()
   const { create, update } = useStaffMutations()
-  const { admin: currentAdmin } = useAdminAuth()
+  const { user: currentAdmin } = useUserAuth()
   const { showToast } = useToast()
-  const [editing, setEditing] = useState<AdminUser | 'new' | null>(null)
+  const [editing, setEditing] = useState<SiteUser | 'new' | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
 
-  const columns: Column<AdminUser>[] = [
+  const columns: Column<SiteUser>[] = [
     { key: 'name', label: 'Name' },
     { key: 'email', label: 'Email' },
     { key: 'role', label: 'Role', render: (a) => a.role.replace('_', ' ') },
@@ -55,7 +56,7 @@ export default function AdminStaff() {
       const data = { ...values }
       if (!data.password) delete data.password
       update.mutate(
-        { id: (editing as AdminUser).id, data },
+        { id: (editing as SiteUser).id, data },
         {
           onSuccess: () => {
             showToast({ variant: 'success', title: 'Staff account updated' })
@@ -67,7 +68,7 @@ export default function AdminStaff() {
     }
   }
 
-  function handleToggleActive(member: AdminUser) {
+  function handleToggleActive(member: SiteUser) {
     update.mutate(
       { id: member.id, data: { active: !member.active } },
       {

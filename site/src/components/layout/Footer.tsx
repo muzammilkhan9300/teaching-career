@@ -13,6 +13,7 @@ import {
   YoutubeIcon,
 } from '@/components/icons'
 import { TextField, TextareaField } from '@/components/ui/FormFields'
+import { RequireLogin } from '@/components/auth/RequireLogin'
 import { useToast } from '@/components/ui/Toast'
 import { api, ApiError } from '@/lib/api'
 import { useSettings } from '@/lib/queries'
@@ -164,36 +165,38 @@ export function Footer() {
         <div className="flex flex-col gap-3">
           <h3 className="text-base font-bold">Contact Us</h3>
           <span className="h-1 w-10 rounded-full bg-teal" aria-hidden="true" />
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3" noValidate>
-            <TextField
-              placeholder="Your Name"
-              className="bg-white/5 text-white placeholder:text-white/50 border-white/15 focus:border-teal"
-              error={errors.name?.message}
-              {...register('name')}
-            />
-            <TextField
-              type="email"
-              placeholder="Your Email"
-              className="bg-white/5 text-white placeholder:text-white/50 border-white/15 focus:border-teal"
-              error={errors.email?.message}
-              {...register('email')}
-            />
-            <TextareaField
-              placeholder="Your Message"
-              rows={3}
-              className="bg-white/5 text-white placeholder:text-white/50 border-white/15 focus:border-teal"
-              error={errors.message?.message}
-              {...register('message')}
-            />
-            <button
-              type="submit"
-              disabled={sendMutation.isPending}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-teal px-6 py-3 text-sm font-bold text-white transition hover:bg-teal-dark disabled:opacity-60"
-            >
-              <SendIcon size={15} />
-              Send Message
-            </button>
-          </form>
+          <RequireLogin activity="send us a message" compact>
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3" noValidate>
+              <TextField
+                placeholder="Your Name"
+                className="bg-white/5 text-white placeholder:text-white/50 border-white/15 focus:border-teal"
+                error={errors.name?.message}
+                {...register('name')}
+              />
+              <TextField
+                type="email"
+                placeholder="Your Email"
+                className="bg-white/5 text-white placeholder:text-white/50 border-white/15 focus:border-teal"
+                error={errors.email?.message}
+                {...register('email')}
+              />
+              <TextareaField
+                placeholder="Your Message"
+                rows={3}
+                className="bg-white/5 text-white placeholder:text-white/50 border-white/15 focus:border-teal"
+                error={errors.message?.message}
+                {...register('message')}
+              />
+              <button
+                type="submit"
+                disabled={sendMutation.isPending}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-teal px-6 py-3 text-sm font-bold text-white transition hover:bg-teal-dark disabled:opacity-60"
+              >
+                <SendIcon size={15} />
+                Send Message
+              </button>
+            </form>
+          </RequireLogin>
         </div>
       </div>
 

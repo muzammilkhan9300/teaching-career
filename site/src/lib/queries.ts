@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
-import { api } from './api'
-import type { BlogPost, Candidate, CandidatesPage, School, SchoolDetail, Service, Settings, Vacancy } from '@/types'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api, ApiError } from './api'
+import type { BlogPost, Candidate, CandidatesPage, MyCandidateApplication, MySchoolRegistration, School, SchoolDetail, Service, Settings, Vacancy } from '@/types'
 
 export function useVacancies() {
   return useQuery({ queryKey: ['vacancies'], queryFn: () => api.get<Vacancy[]>('/vacancies') })
@@ -13,6 +13,36 @@ export function useVacancy(id: string | undefined) {
     enabled: Boolean(id),
     retry: false,
   })
+}
+
+// ---- A logged-in school owner's own vacancies (self-service post/edit/delete) ----
+
+export function useMyVacancies(enabled = true) {
+  return useQuery({ queryKey: ['vacancies', 'mine'], queryFn: () => api.get<Vacancy[]>('/vacancies/mine'), enabled })
+}
+
+export function useMyVacancyMutations() {
+  const queryClient = useQueryClient()
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ['vacancies', 'mine'] })
+    queryClient.invalidateQueries({ queryKey: ['vacancies'] })
+    queryClient.invalidateQueries({ queryKey: ['schools'] })
+  }
+
+  const create = useMutation({
+    mutationFn: (data: Record<string, unknown>) => api.postJson<Vacancy>('/vacancies/mine', data),
+    onSuccess: invalidate,
+  })
+  const update = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) => api.putJson<Vacancy>(`/vacancies/mine/${id}`, data),
+    onSuccess: invalidate,
+  })
+  const remove = useMutation({
+    mutationFn: (id: string) => api.delete(`/vacancies/mine/${id}`),
+    onSuccess: invalidate,
+  })
+
+  return { create, update, remove }
 }
 
 export function useSchools() {
@@ -88,4 +118,70 @@ export function useSettings() {
     queryFn: () => api.get<Settings>('/settings'),
     staleTime: 5 * 60 * 1000,
   })
+}
+
+// ---- A logged-in candidate's own application (self-service edit/resubmit) ----
+
+export function useMyCandidateApplication() {
+  return useQuery({
+    queryKey: ['candidate-applications', 'mine'],
+    queryFn: async () => {
+      try {
+        return await api.get<MyCandidateApplication>('/candidate-registrations/mine')
+      } catch (error) {
+        // No application yet is a normal state for this query, not an error.
+        if (error instanceof ApiError && error.status === 404) return null
+        throw error
+      }
+    },
+  })
+}
+
+export function useMyCandidateApplicationMutations() {
+  const queryClient = useQueryClient()
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['candidate-applications', 'mine'] })
+
+  const create = useMutation({
+    mutationFn: (formData: FormData) => api.postForm<MyCandidateApplication>('/candidate-registrations', formData),
+    onSuccess: invalidate,
+  })
+  const resubmit = useMutation({
+    mutationFn: (formData: FormData) => api.putForm<MyCandidateApplication>('/candidate-registrations/mine', formData),
+    onSuccess: invalidate,
+  })
+
+  return { create, resubmit }
+}
+
+// ---- A logged-in school owner's own registration (self-service edit/resubmit) ----
+
+export function useMySchoolRegistration() {
+  return useQuery({
+    queryKey: ['school-registrations', 'mine'],
+    queryFn: async () => {
+      try {
+        return await api.get<MySchoolRegistration>('/school-registrations/mine')
+      } catch (error) {
+        // No registration yet is a normal state for this query, not an error.
+        if (error instanceof ApiError && error.status === 404) return null
+        throw error
+      }
+    },
+  })
+}
+
+export function useMySchoolRegistrationMutations() {
+  const queryClient = useQueryClient()
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['school-registrations', 'mine'] })
+
+  const create = useMutation({
+    mutationFn: (formData: FormData) => api.postForm<MySchoolRegistration>('/school-registrations', formData),
+    onSuccess: invalidate,
+  })
+  const resubmit = useMutation({
+    mutationFn: (formData: FormData) => api.putForm<MySchoolRegistration>('/school-registrations/mine', formData),
+    onSuccess: invalidate,
+  })
+
+  return { create, resubmit }
 }

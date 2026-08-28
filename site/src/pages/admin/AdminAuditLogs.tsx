@@ -36,6 +36,7 @@ export default function AdminAuditLogs() {
     { key: 'resource', label: 'Resource' },
     { key: 'resourceId', label: 'Record', className: 'font-mono text-xs', render: (r) => r.resourceId ?? '—' },
     { key: 'details', label: 'Details', render: (r) => r.details ?? '—' },
+    { key: 'ip', label: 'IP Address', className: 'font-mono text-xs', render: (r) => r.ip ?? '—' },
   ]
 
   return (

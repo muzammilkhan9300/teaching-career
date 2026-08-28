@@ -3,6 +3,14 @@ import { idTransform } from './plugins/idTransform.js'
 
 const candidateApplicationSchema = new Schema(
   {
+    // Optional — legacy records submitted before accounts existed have no
+    // owner and simply aren't editable via the self-service flow; every new
+    // submission always sets this (see routes/candidateRegistrations.ts).
+    ownerId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+    // Set the first time this application is verified and a public Candidate
+    // is created from it — later re-verifications (after an edit +
+    // resubmission) update that same Candidate instead of creating a duplicate.
+    publishedCandidateId: { type: Schema.Types.ObjectId, ref: 'Candidate' },
     fullName: { type: String, required: true },
     email: { type: String, required: true },
     whatsapp: { type: String, required: true },
@@ -40,6 +48,10 @@ const candidateApplicationSchema = new Schema(
     homeTuitionEligibility: { type: String, enum: ['Pending', 'Not Requested'], required: true },
     policeVerificationStatus: { type: String, enum: ['Pending', 'Not Required'], required: true },
     applicationStatus: { type: String, default: 'New' },
+    rejectionReason: { type: String },
+    submittedAt: { type: Date },
+    approvedAt: { type: Date },
+    rejectedAt: { type: Date },
   },
   { timestamps: true },
 )

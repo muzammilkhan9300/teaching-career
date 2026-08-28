@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useAdminAuth } from '@/admin/AdminAuthContext'
+import { useUserAuth } from '@/auth/UserAuthContext'
 import type { Capability } from '@/admin/permissions'
 import { AlertIcon } from '@/components/icons/admin'
 
@@ -10,7 +10,7 @@ import { AlertIcon } from '@/components/icons/admin'
  * happens server-side regardless of this component.
  */
 export function RequireCapability({ capability, children }: { capability: Capability; children: ReactNode }) {
-  const { can } = useAdminAuth()
+  const { can } = useUserAuth()
 
   if (!can(capability)) {
     return (

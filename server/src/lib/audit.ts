@@ -14,7 +14,7 @@ export function logAction(
 ) {
   const adminId = req.admin?.id
   const adminEmail = req.admin?.email ?? 'unknown'
-  AuditLog.create({ adminId, adminEmail, action, resource, resourceId, details }).catch((err) => {
+  AuditLog.create({ adminId, adminEmail, action, resource, resourceId, details, ip: req.ip }).catch((err) => {
     console.error('[audit] failed to record action', err)
   })
 }

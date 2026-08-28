@@ -8,6 +8,7 @@ const STATUS_STYLES: Record<string, string> = {
   Rejected: 'bg-red-50 text-red-600',
   Applied: 'bg-badge text-teal-deep',
   Pending: 'bg-amber-50 text-amber-700',
+  Resubmitted: 'bg-blue-50 text-blue-700',
   Active: 'bg-mint text-teal-deep',
   Suspended: 'bg-red-50 text-red-600',
   Verified: 'bg-mint text-teal-deep',

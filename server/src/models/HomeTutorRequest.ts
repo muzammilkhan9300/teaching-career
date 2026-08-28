@@ -23,6 +23,8 @@ const homeTutorRequestSchema = new Schema(
     parentMessage: { type: String },
     agreeTerms: { type: Boolean, required: true },
     requestStatus: { type: String, default: 'New' },
+    assignedCandidateId: { type: Schema.Types.ObjectId, ref: 'Candidate' },
+    assignedCandidateName: { type: String },
   },
   { timestamps: true },
 )

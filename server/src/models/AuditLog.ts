@@ -9,6 +9,7 @@ const auditLogSchema = new Schema(
     resource: { type: String, required: true },
     resourceId: { type: String },
     details: { type: String },
+    ip: { type: String },
   },
   { timestamps: true },
 )

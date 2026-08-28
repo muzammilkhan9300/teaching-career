@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { HomeTutorRequest } from '../models/HomeTutorRequest.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { writeLimiter } from '../middleware/rateLimiter.js'
+import { requireUser } from '../middleware/requireUser.js'
 import { homeTutorRequestBodySchema } from '../validation/homeTutorRequest.js'
 import { notify } from '../lib/notify.js'
 
@@ -9,6 +10,7 @@ export const homeTutorRequestsRouter = Router()
 
 homeTutorRequestsRouter.post(
   '/',
+  requireUser,
   writeLimiter,
   asyncHandler(async (req, res) => {
     const body = homeTutorRequestBodySchema.parse(req.body)

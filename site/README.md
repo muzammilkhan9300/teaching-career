@@ -31,15 +31,19 @@ npm run preview  # preview the production build locally
 
 ```
 src/
-├── admin/              admin-panel-only code: AdminAuthContext (cookie session + role/
-│                       capability checks), AdminRoute (redirects to /admin/login when
-│                       signed out), AdminLayout (responsive sidebar + top bar),
-│                       adminQueries.ts (CRUD/status/verification/staff/reports hooks),
-│                       useTableControls (search/sort/pagination), permissions.ts (mirrors
-│                       the server's role → capability map for UI-gating only — the server
-│                       enforces it independently), and components/ (DataTable,
-│                       ResourceFormModal, StatusBadge, NotificationsBell, RequireCapability,
-│                       charts/BarChart + LineChart)
+├── auth/                UserAuthContext — the one session for the whole app (public visitor
+│                       or staff, same cookie): user/isAuthenticated/isStaff/can()/login/
+│                       register/logout/updateProfile
+├── admin/              admin-panel-only code: AdminRoute (requires a signed-in session AND
+│                       a staff-level role — shows Access Denied inline for a plain 'user',
+│                       redirects to /login if not signed in at all), AdminLayout (responsive
+│                       sidebar + top bar + "Back to Website" link), adminQueries.ts (CRUD/
+│                       status/verification/staff/reports hooks), useTableControls (search/
+│                       sort/pagination), permissions.ts (mirrors the server's role →
+│                       capability map for UI-gating only — the server enforces it
+│                       independently), and components/ (DataTable, ResourceFormModal,
+│                       StatusBadge, NotificationsBell, RequireCapability, charts/BarChart +
+│                       LineChart)
 ├── components/
 │   ├── icons/          index.tsx (public site) and admin.ts (admin-only icons) —
 │   │                   real icons from lucide-react / react-icons
@@ -49,9 +53,10 @@ src/
 ├── layouts/              RootLayout (public header + outlet + footer)
 ├── lib/                  api.ts (fetch wrapper), queries.ts (public data hooks),
 │                        validation.ts (Zod schemas for the public forms)
-├── pages/                one component per public route; pages/admin/ holds every admin
-│                        page — dashboard, CRUD for vacancies/schools/candidates/blogs/
-│                        services, candidate verification and school approval, the
+├── pages/                one component per public route (incl. Login/Register/
+│                        ForgotPassword/ResetPassword/Profile); pages/admin/ holds every
+│                        admin page — dashboard, CRUD for vacancies/schools/candidates/
+│                        blogs/services, candidate verification and school approval, the
 │                        document-review queue, staff, audit logs, reports, settings, and
 │                        the shared status+delete inbox used by the 3 simpler submission types
 └── types/                shared TypeScript interfaces
@@ -62,6 +67,10 @@ src/
 Public listing/detail pages fetch from the API via `@tanstack/react-query` hooks in
 `src/lib/queries.ts`. All 4 public forms (candidate/school registration, home-tutor request,
 contact) and the vacancy-apply button submit to the API directly — nothing is stored client-side.
-The admin panel (`/admin`) is a separate, cookie-authenticated section that manages the public
-listings and reviews form submissions; see the root `README.md` for how to create the first admin
-account.
+
+There is one account system for the whole app: `/login`, `/register`, and `/profile` are public
+pages backed by `UserAuthContext`. The admin panel (`/admin`, under `AdminRoute`) uses that exact
+same session — the "Admin Dashboard" nav link is always visible, but the route itself checks the
+signed-in account's `role`: not signed in → redirected to `/login`; signed in but role `'user'` →
+an inline Access Denied screen; a staff role → the dashboard. See the root `README.md` for how to
+create the first `super_admin` account.

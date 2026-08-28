@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
 import { FormCard, FormSectionTitle } from '@/components/ui/FormCard'
+import { RequireLogin } from '@/components/auth/RequireLogin'
 import { SelectField, TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
 import { api, ApiError } from '@/lib/api'
@@ -79,6 +80,7 @@ export default function HomeTutor() {
 
       <section className="py-16">
         <div className="tc-container">
+          <RequireLogin activity="request a home tutor">
           <FormCard>
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8" noValidate>
               <h2 className="flex items-center gap-2 text-xl font-extrabold text-navy">
@@ -163,6 +165,7 @@ export default function HomeTutor() {
               </button>
             </form>
           </FormCard>
+          </RequireLogin>
         </div>
       </section>
     </>

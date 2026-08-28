@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
-import { useAdminAuth } from './AdminAuthContext'
+import { useUserAuth } from '@/auth/UserAuthContext'
 import { NotificationsBell } from './components/NotificationsBell'
 import type { Capability } from './permissions'
 import {
@@ -11,6 +11,7 @@ import {
   UsersIcon,
   InboxIcon,
   LogOutIcon,
+  ExternalLinkIcon,
 } from '@/components/icons/admin'
 import { MenuIcon, BookIcon, ShieldIcon } from '@/components/icons'
 import type { ComponentType } from 'react'
@@ -69,7 +70,7 @@ function NavLinkItem({ item, onNavigate }: { item: NavItem; onNavigate?: () => v
 }
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
-  const { admin, logout, can } = useAdminAuth()
+  const { user: admin, logout, can } = useUserAuth()
   const visibleManagement = MANAGEMENT_ITEMS.filter((item) => !item.requires || can(item.requires))
   const visibleNav = NAV_ITEMS.filter((item) => !item.requires || can(item.requires))
 
@@ -79,6 +80,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         <p className="text-lg font-extrabold text-white">TeachingCareer</p>
         <p className="text-xs font-semibold uppercase tracking-wide text-teal">Admin Panel</p>
       </div>
+
+      <Link
+        to="/"
+        onClick={onNavigate}
+        className="flex items-center gap-3 rounded-xl border border-white/15 px-3.5 py-2.5 text-sm font-semibold text-white transition hover:border-teal hover:bg-white/10"
+      >
+        <ExternalLinkIcon size={17} />
+        Back to Website
+      </Link>
 
       <nav className="flex flex-1 flex-col gap-6 overflow-y-auto">
         <div className="flex flex-col gap-1">
