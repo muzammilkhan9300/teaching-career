@@ -1,3 +1,4 @@
+import path from 'node:path'
 import 'dotenv/config'
 
 function required(name: string, fallback?: string): string {
@@ -19,6 +20,14 @@ export const env = {
   ),
   jwtExpiresIn: required('JWT_EXPIRES_IN', '7d'),
   nodeEnv: required('NODE_ENV', 'development'),
+
+  // Only used in production, to serve the built React app (site/dist) from
+  // this same Express process. Defaults to the sibling `site/dist` folder
+  // that exists when server/ and site/ are deployed together from one repo
+  // checkout; override with CLIENT_DIST_PATH if your deployment layout differs.
+  clientDistPath: path.resolve(
+    process.env.CLIENT_DIST_PATH || path.join(process.cwd(), '../site/dist'),
+  ),
 
   // Optional — Google Sign-In stays disabled (routes respond 503) until both
   // are set. Never fabricate values here; there is no working fallback.

@@ -30,6 +30,42 @@ cd server && npm run dev    # http://localhost:4000
 cd site && npm run dev      # http://localhost:5174 (proxies /api and /uploads to the server)
 ```
 
+## Deploying to Hostinger (Cloud Startup)
+
+Hostinger Cloud Startup runs Node.js apps through hPanel's "Setup Node.js App" tool (one process
+per domain, no bundled database service) — so the deployment shape is: one Express process serves
+both the API and the built React app, backed by an external MongoDB (e.g. Atlas).
+
+1. **Database** — use a MongoDB Atlas connection string (or any reachable `MONGODB_URI`); Cloud
+   Startup has nowhere to run MongoDB itself.
+2. **Push this repo to GitHub** (or your Git host of choice), then in hPanel:
+   - **Git** (if available on your plan) — point it at the repo to pull the code onto the server;
+     otherwise upload the repo via File Manager or `git clone` over SSH.
+3. **hPanel → Node.js**, create an application:
+   - **Node.js version**: 20.19+ or 22.12+ (`engines` in each `package.json` enforces this).
+   - **Application root**: `server` (the folder with the Node app's own `package.json`).
+   - **Application startup file**: `dist/index.js`.
+   - **Environment variables** — set at least: `NODE_ENV=production`, `MONGODB_URI`,
+     `CLIENT_ORIGIN` (your `https://` domain), `JWT_SECRET` (long random string — the app refuses
+     to start without one in production), `JWT_EXPIRES_IN`, `CONTACT_RECIPIENT_EMAIL`, plus the
+     optional `GOOGLE_*`/`SMTP_*` vars from `server/.env.example` if you use those features. Leave
+     `PORT` alone — Hostinger injects it.
+4. Over SSH (or hPanel's "Run NPM install" plus a terminal), from the repo root:
+   ```bash
+   npm run install:all   # installs server/ and site/ dependencies
+   npm run build          # tsc-builds the server, vite-builds the client to site/dist
+   cd server && npm run create-admin   # once, to bootstrap the first super_admin
+   ```
+   The server serves `site/dist` directly (see `clientDistPath` in `server/src/config/env.ts`) —
+   no separate static-hosting step needed. Re-run `npm run build` and restart the app for every
+   deploy.
+5. Restart the Node app from hPanel. Visit your domain — `/` serves the React app, `/api/*` is the
+   API, and uploaded photos/logos are served from `/uploads/*` (verification documents stay
+   private, never exposed as static files).
+
+Point your domain's DNS at Hostinger and issue an SSL certificate (hPanel's free Let's Encrypt)
+before going live — the auth cookie is `secure`-flagged in production and requires HTTPS.
+
 ## Accounts & the admin panel
 
 There is one account system for the whole app — public visitors and staff are both a `User`,

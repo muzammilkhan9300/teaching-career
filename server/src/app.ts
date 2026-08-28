@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import express from 'express'
 import cors from 'cors'
@@ -32,6 +33,21 @@ export function createApp() {
   app.use('/uploads/photos', express.static(path.join(uploadsRoot, 'photos')))
   app.use('/uploads/logos', express.static(path.join(uploadsRoot, 'logos')))
   app.use('/api', apiRouter)
+
+  // In production this one process also serves the built React app (see
+  // config/env.ts's clientDistPath) — Hostinger's Node.js app hosting runs a
+  // single process per domain, so the API and the static frontend share it
+  // rather than needing two separate deployments.
+  if (env.nodeEnv === 'production') {
+    if (fs.existsSync(env.clientDistPath)) {
+      app.use(express.static(env.clientDistPath))
+      app.get(/^(?!\/api\/|\/uploads\/).*/, (_req, res) => {
+        res.sendFile(path.join(env.clientDistPath, 'index.html'))
+      })
+    } else {
+      console.warn(`[server] clientDistPath not found: ${env.clientDistPath} (site not built?)`)
+    }
+  }
 
   app.use(notFoundHandler)
   app.use(errorHandler)
