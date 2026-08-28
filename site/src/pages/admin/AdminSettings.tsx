@@ -70,7 +70,7 @@ export default function AdminSettings() {
               id="whatsapp"
               label="WhatsApp Number"
               required
-              placeholder="923128423676"
+              placeholder="923128423576"
               value={form.whatsapp}
               onChange={(e) => setForm((f) => ({ ...f, whatsapp: e.target.value }))}
             />

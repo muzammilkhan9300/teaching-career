@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, ApiError } from './api'
+import { api } from './api'
 import type { BlogPost, Candidate, CandidatesPage, MyCandidateApplication, MySchoolRegistration, School, SchoolDetail, Service, Settings, Vacancy } from '@/types'
 
 export function useVacancies() {
@@ -125,15 +125,9 @@ export function useSettings() {
 export function useMyCandidateApplication() {
   return useQuery({
     queryKey: ['candidate-applications', 'mine'],
-    queryFn: async () => {
-      try {
-        return await api.get<MyCandidateApplication>('/candidate-registrations/mine')
-      } catch (error) {
-        // No application yet is a normal state for this query, not an error.
-        if (error instanceof ApiError && error.status === 404) return null
-        throw error
-      }
-    },
+    // Server returns 200 + null when there's no application yet — that's a
+    // normal state for this query, not an error, so no 404 to catch here.
+    queryFn: () => api.get<MyCandidateApplication | null>('/candidate-registrations/mine'),
   })
 }
 
@@ -158,15 +152,9 @@ export function useMyCandidateApplicationMutations() {
 export function useMySchoolRegistration() {
   return useQuery({
     queryKey: ['school-registrations', 'mine'],
-    queryFn: async () => {
-      try {
-        return await api.get<MySchoolRegistration>('/school-registrations/mine')
-      } catch (error) {
-        // No registration yet is a normal state for this query, not an error.
-        if (error instanceof ApiError && error.status === 404) return null
-        throw error
-      }
-    },
+    // Server returns 200 + null when there's no registration yet — that's a
+    // normal state for this query, not an error, so no 404 to catch here.
+    queryFn: () => api.get<MySchoolRegistration | null>('/school-registrations/mine'),
   })
 }
 

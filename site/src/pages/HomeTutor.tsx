@@ -15,7 +15,7 @@ import { homeTutorSchema, type HomeTutorInput } from '@/lib/validation'
 import { PhoneIcon, PinIcon, ShieldIcon, WhatsappIcon } from '@/components/icons'
 
 const CITIES = ['Islamabad', 'Lahore', 'Karachi']
-const FALLBACK = { phone: '0312 8423676', whatsapp: '923128423676' }
+const FALLBACK = { phone: '0312 8423576', whatsapp: '923128423576' }
 
 export default function HomeTutor() {
   const navigate = useNavigate()
@@ -93,7 +93,7 @@ export default function HomeTutor() {
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   <TextField label="Full Name" required placeholder="Enter your full name" error={errors.parentName?.message} {...register('parentName')} />
                   <TextField label="Email Address" type="email" required placeholder="Enter your email address" error={errors.parentEmail?.message} {...register('parentEmail')} />
-                  <TextField label="WhatsApp Number" type="tel" required placeholder="0312 8423676" error={errors.parentWhatsapp?.message} {...register('parentWhatsapp')} />
+                  <TextField label="WhatsApp Number" type="tel" required placeholder="0312 8423576" error={errors.parentWhatsapp?.message} {...register('parentWhatsapp')} />
                 </div>
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   <SelectField label="City" required placeholder="Select your city" options={CITIES.map((c) => ({ label: c, value: c }))} error={errors.parentCity?.message} {...register('parentCity')} />

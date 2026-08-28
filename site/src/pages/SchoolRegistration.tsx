@@ -199,7 +199,7 @@ export default function SchoolRegistration() {
                   </div>
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <TextField label="Website" placeholder="https://yourschool.edu.pk" error={errors.schoolWebsite?.message} {...register('schoolWebsite')} />
-                    <TextField label="WhatsApp Number" type="tel" required placeholder="0312 8423676" error={errors.schoolWhatsapp?.message} {...register('schoolWhatsapp')} />
+                    <TextField label="WhatsApp Number" type="tel" required placeholder="0312 8423576" error={errors.schoolWhatsapp?.message} {...register('schoolWhatsapp')} />
                     <TextField label="Phone Number" type="tel" required placeholder="042 1234567" error={errors.schoolPhone?.message} {...register('schoolPhone')} />
                   </div>
                 </div>

@@ -24,8 +24,9 @@ candidateRegistrationsRouter.get(
   '/mine',
   requireUser,
   asyncHandler(async (req, res) => {
+    // 200 + null (not 404) — "you haven't applied yet" is a normal, expected
+    // state for this polling-style "do I have one" check, not an error condition.
     const application = await CandidateApplication.findOne({ ownerId: req.user!.id })
-    if (!application) throw new NotFoundError("You haven't submitted a candidate application yet.")
     res.json(application)
   }),
 )

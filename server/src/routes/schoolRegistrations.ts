@@ -19,8 +19,9 @@ schoolRegistrationsRouter.get(
   '/mine',
   requireUser,
   asyncHandler(async (req, res) => {
+    // 200 + null (not 404) — "you haven't registered yet" is a normal, expected
+    // state for this polling-style "do I have one" check, not an error condition.
     const registration = await SchoolRegistration.findOne({ ownerId: req.user!.id })
-    if (!registration) throw new NotFoundError("You haven't registered a school yet.")
     res.json(registration)
   }),
 )

@@ -15,7 +15,7 @@ export async function getOrCreateSettings() {
       _id: SETTINGS_SINGLETON_ID,
       phone: '0312 8423576',
       phoneSecondary: '0300 0243546',
-      whatsapp: '923128423676',
+      whatsapp: '923128423576',
       email: 'info@teachingcareer.pk',
       address: 'Islamabad, Pakistan',
       social: { instagram: '', facebook: '', linkedin: '', youtube: '' },

@@ -13,7 +13,7 @@ import { useSettings } from '@/lib/queries'
 import { contactMessageSchema, type ContactMessageInput } from '@/lib/validation'
 import { MailIcon, PhoneIcon, SendIcon, WhatsappIcon } from '@/components/icons'
 
-const FALLBACK = { phone: '0312 8423576', phoneSecondary: '0300 0243546', whatsapp: '923128423676' }
+const FALLBACK = { phone: '0312 8423576', phoneSecondary: '0300 0243546', whatsapp: '923128423576' }
 
 export default function Contact() {
   const { showToast } = useToast()

@@ -241,7 +241,7 @@ export default function CandidateRegistration() {
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   <TextField label="Full Name" required placeholder="Enter your full name" error={errors.fullName?.message} {...register('fullName')} />
                   <TextField label="Email Address" type="email" required placeholder="Enter your email address" error={errors.email?.message} {...register('email')} />
-                  <TextField label="WhatsApp Number" type="tel" required placeholder="0312 8423676" error={errors.whatsapp?.message} {...register('whatsapp')} />
+                  <TextField label="WhatsApp Number" type="tel" required placeholder="0312 8423576" error={errors.whatsapp?.message} {...register('whatsapp')} />
                 </div>
                 <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   <SelectField label="City" required placeholder="Select your city" options={CITIES.map((c) => ({ label: c, value: c }))} error={errors.city?.message} {...register('city')} />
