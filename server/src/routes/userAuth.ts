@@ -105,7 +105,7 @@ userAuthRouter.post(
     // No email provider is configured yet — surface the link instead of
     // silently pretending an email went out. Wire a real provider (SMTP /
     // SendGrid / Resend) here and remove `devResetUrl` once one exists.
-    if (env.nodeEnv !== 'production') {
+    if (!env.isProduction) {
       console.log(`[password-reset] ${user.email} -> ${resetUrl}`)
       res.json({ ...genericResponse, devResetUrl: resetUrl })
       return

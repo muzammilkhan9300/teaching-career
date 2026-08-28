@@ -16,17 +16,24 @@ function required(name: string, fallback?: string): string {
 // can't be trusted to always mean "the server package's own folder".
 const SERVER_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 
+const nodeEnv = required('NODE_ENV', 'development')
+// Only "development" opts out of production hardening (secure cookies, trust
+// proxy, serving the built client, requiring a real JWT_SECRET). Any other
+// value counts as production-like — some hosts don't set NODE_ENV to the
+// literal string "production" (e.g. Hostinger's Node.js app manager uses
+// "deployment"), so treating "not development" as the production case is the
+// safer default than requiring an exact match.
+const isProduction = nodeEnv !== 'development'
+
 export const env = {
   port: Number(required('PORT', '4000')),
   mongodbUri: required('MONGODB_URI', 'mongodb://127.0.0.1:27017/teachingcareer'),
   clientOrigin: required('CLIENT_ORIGIN', 'http://localhost:5173'),
   maxUploadMb: Number(required('MAX_UPLOAD_MB', '5')),
-  jwtSecret: required(
-    'JWT_SECRET',
-    process.env.NODE_ENV === 'production' ? undefined : 'dev-only-insecure-secret-change-me',
-  ),
+  jwtSecret: required('JWT_SECRET', isProduction ? undefined : 'dev-only-insecure-secret-change-me'),
   jwtExpiresIn: required('JWT_EXPIRES_IN', '7d'),
-  nodeEnv: required('NODE_ENV', 'development'),
+  nodeEnv,
+  isProduction,
 
   // Only used in production, to serve the built React app (site/dist) from
   // this same Express process. Defaults to the sibling `site/dist` folder

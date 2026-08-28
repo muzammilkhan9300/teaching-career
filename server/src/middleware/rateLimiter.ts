@@ -7,7 +7,7 @@ import { env } from '../config/env.js'
 // exhausts a 10-per-15-min budget in minutes and then locks out real
 // interactive use until the server restarts. Keep production's limits
 // tight for actual abuse resistance; widen them elsewhere.
-const isProd = env.nodeEnv === 'production'
+const isProd = env.isProduction
 
 export const writeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

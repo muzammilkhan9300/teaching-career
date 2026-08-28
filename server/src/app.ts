@@ -15,7 +15,7 @@ export function createApp() {
   // Behind a reverse proxy in production, req.ip would otherwise resolve to
   // the proxy's address instead of the real client — breaks rate limiting
   // and audit-log IPs.
-  if (env.nodeEnv === 'production') app.set('trust proxy', 1)
+  if (env.isProduction) app.set('trust proxy', 1)
 
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
   app.use(cors({ origin: env.clientOrigin, credentials: true }))
@@ -37,7 +37,7 @@ export function createApp() {
   // config/env.ts's clientDistPath) — Hostinger's Node.js app hosting runs a
   // single process per domain, so the API and the static frontend share it
   // rather than needing two separate deployments.
-  if (env.nodeEnv === 'production') {
+  if (env.isProduction) {
     if (fs.existsSync(env.clientDistPath)) {
       app.use(express.static(env.clientDistPath))
       app.get(/^(?!\/api\/|\/uploads\/).*/, (_req, res) => {

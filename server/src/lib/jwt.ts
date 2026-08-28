@@ -27,7 +27,7 @@ export const USER_COOKIE_NAME = 'tc_user_token'
 export const userCookieOptions = {
   httpOnly: true,
   sameSite: 'lax' as const,
-  secure: env.nodeEnv === 'production',
+  secure: env.isProduction,
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: '/',
 }
