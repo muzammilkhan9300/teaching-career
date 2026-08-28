@@ -32,36 +32,37 @@ cd site && npm run dev      # http://localhost:5174 (proxies /api and /uploads t
 
 ## Deploying to Hostinger (Cloud Startup)
 
-Hostinger Cloud Startup runs Node.js apps through hPanel's "Setup Node.js App" tool (one process
-per domain, no bundled database service) — so the deployment shape is: one Express process serves
-both the API and the built React app, backed by an external MongoDB (e.g. Atlas).
+Hostinger runs this as one Node.js application (no bundled database service) that serves both the
+API and the built React app, backed by an external MongoDB (e.g. Atlas). This works with either
+Hostinger's classic hPanel "Setup Node.js App" tool or its newer GitHub-import Node.js flow.
 
 1. **Database** — use a MongoDB Atlas connection string (or any reachable `MONGODB_URI`); Cloud
    Startup has nowhere to run MongoDB itself.
-2. **Push this repo to GitHub** (or your Git host of choice), then in hPanel:
-   - **Git** (if available on your plan) — point it at the repo to pull the code onto the server;
-     otherwise upload the repo via File Manager or `git clone` over SSH.
-3. **hPanel → Node.js**, create an application:
+2. **Push this repo to GitHub** and connect it in Hostinger's Node.js app import, or `git clone` it
+   over SSH for the classic hPanel flow.
+3. Configure the app:
    - **Node.js version**: 20.19+ or 22.12+ (`engines` in each `package.json` enforces this).
-   - **Application root**: `server` (the folder with the Node app's own `package.json`).
-   - **Application startup file**: `dist/index.js`.
+   - **Root directory**: `./` (repo root) — the root `package.json`'s scripts drive both `server/`
+     and `site/`.
+   - **Build command**: `npm run build` (installs both subpackages' dependencies, then builds the
+     server and the client).
+   - **Output directory**: `server/dist`. This matters beyond documentation — the client build is
+     configured (`site/vite.config.ts`) to output into `server/dist/public`, nested inside this
+     same directory, specifically so that a platform which only keeps a declared "output
+     directory" for the running app doesn't discard the built frontend.
+   - **Entry file / Application startup file**: `server/dist/index.js`.
    - **Environment variables** — set at least: `NODE_ENV=production`, `MONGODB_URI`,
      `CLIENT_ORIGIN` (your `https://` domain), `JWT_SECRET` (long random string — the app refuses
      to start without one in production), `JWT_EXPIRES_IN`, `CONTACT_RECIPIENT_EMAIL`, plus the
      optional `GOOGLE_*`/`SMTP_*` vars from `server/.env.example` if you use those features. Leave
-     `PORT` alone — Hostinger injects it.
-4. Over SSH (or hPanel's "Run NPM install" plus a terminal), from the repo root:
-   ```bash
-   npm run install:all   # installs server/ and site/ dependencies
-   npm run build          # tsc-builds the server, vite-builds the client to site/dist
-   cd server && npm run create-admin   # once, to bootstrap the first super_admin
-   ```
-   The server serves `site/dist` directly (see `clientDistPath` in `server/src/config/env.ts`) —
-   no separate static-hosting step needed. Re-run `npm run build` and restart the app for every
-   deploy.
-5. Restart the Node app from hPanel. Visit your domain — `/` serves the React app, `/api/*` is the
-   API, and uploaded photos/logos are served from `/uploads/*` (verification documents stay
-   private, never exposed as static files).
+     `PORT` alone — the platform injects it. Note: some hosts don't set `NODE_ENV` to the literal
+     string `production` (Hostinger's Node.js app manager uses `deployment`) — the app treats any
+     value other than `development` as production, so this is handled either way.
+4. Once deployed, run the one-time admin bootstrap over SSH from the repo root:
+   `cd server && npm run create-admin`.
+5. Visit your domain — `/` serves the React app, `/api/*` is the API, and uploaded photos/logos
+   are served from `/uploads/*` (verification documents stay private, never exposed as static
+   files). Redeploy (not just restart) after every push so the platform rebuilds `server/dist`.
 
 Point your domain's DNS at Hostinger and issue an SSL certificate (hPanel's free Let's Encrypt)
 before going live — the auth cookie is `secure`-flagged in production and requires HTTPS.
