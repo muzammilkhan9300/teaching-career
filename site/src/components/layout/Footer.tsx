@@ -19,9 +19,13 @@ import { api, ApiError } from '@/lib/api'
 import { useSettings } from '@/lib/queries'
 import { contactMessageSchema, type ContactMessageInput } from '@/lib/validation'
 
+// The footer shows this address specifically, independent of settings.email
+// (used elsewhere, e.g. the admin-configurable contact email) — per request,
+// only the footer's displayed address changes here.
+const FOOTER_EMAIL = 'info@teachingcareer.site'
+
 const FALLBACK_SETTINGS = {
   phone: '0312 8423576',
-  email: 'info@teachingcareer.pk',
   address: 'Islamabad, Pakistan',
   social: { instagram: '#', facebook: '#', linkedin: '#', youtube: '#' },
 }
@@ -48,7 +52,6 @@ export function Footer() {
   const { showToast } = useToast()
   const { data: settings } = useSettings()
   const phone = settings?.phone ?? FALLBACK_SETTINGS.phone
-  const email = settings?.email ?? FALLBACK_SETTINGS.email
   const address = settings?.address ?? FALLBACK_SETTINGS.address
   const social = settings?.social ?? FALLBACK_SETTINGS.social
   const {
@@ -108,8 +111,8 @@ export function Footer() {
             </li>
             <li className="flex items-center gap-2.5">
               <MailIcon size={15} className="text-teal" />
-              <a href={`mailto:${email}`} className="hover:text-teal">
-                {email}
+              <a href={`mailto:${FOOTER_EMAIL}`} className="hover:text-teal">
+                {FOOTER_EMAIL}
               </a>
             </li>
             <li className="flex items-center gap-2.5">
