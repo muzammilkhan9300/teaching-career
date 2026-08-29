@@ -43,7 +43,7 @@ export function SchoolCard({ school }: { school: School }) {
         </span>
         <Link
           to={`/school-profiles/${school.id}`}
-          className="rounded-full border-2 border-teal px-3.5 py-1.5 text-xs font-bold text-teal transition hover:bg-mint"
+          className="shrink-0 whitespace-nowrap rounded-full border-2 border-teal px-3.5 py-1.5 text-xs font-bold text-teal transition hover:bg-mint"
         >
           Show All Vacancies
         </Link>

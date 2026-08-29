@@ -62,7 +62,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur">
-      <div className="tc-container flex min-h-[88px] items-center gap-6 lg:min-h-[100px]">
+      <div className="tc-container flex min-h-[88px] items-center justify-between gap-6 lg:min-h-[100px]">
         <Link to="/" className="flex shrink-0 items-center" aria-label="TeachingCareer — Home">
           <img
             src="/assets/images/logo.png"
@@ -75,7 +75,7 @@ export function Header() {
           />
         </Link>
 
-        <nav className="hidden flex-1 lg:block" aria-label="Primary">
+        <nav className="hidden lg:block" aria-label="Primary">
           <ul className="flex items-center gap-8">
             {NAV_ITEMS.map((item) => {
               if (isParent(item)) {
@@ -118,7 +118,7 @@ export function Header() {
           </ul>
         </nav>
 
-        <div className="ml-auto flex items-center gap-4">
+        <div className="flex items-center gap-4">
           {isAuthenticated && user ? (
             <div className="group relative hidden lg:block">
               <button

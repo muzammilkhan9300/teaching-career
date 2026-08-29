@@ -43,6 +43,20 @@ export default function About() {
               decoding="async"
               className="h-40 w-full rounded-2xl object-cover shadow-tc"
             />
+            <img
+              src="/assets/images/about-us-family.png"
+              alt="A family finding the right tutor through TeachingCareer"
+              loading="lazy"
+              decoding="async"
+              className="h-40 w-full rounded-2xl object-cover shadow-tc"
+            />
+            <img
+              src="/assets/images/about-us-teacher-laptop.png"
+              alt="A teacher managing their TeachingCareer profile"
+              loading="lazy"
+              decoding="async"
+              className="h-40 w-full rounded-2xl object-cover shadow-tc"
+            />
           </div>
 
           <div className="flex flex-col gap-4">

@@ -15,7 +15,7 @@ import { candidateRegistrationSchema, type CandidateRegistrationInput } from '@/
 import { AlertIcon, CapIcon, CheckCircleIcon, ClockIcon, InfoIcon, LockIcon, PersonIcon } from '@/components/icons'
 import type { MyCandidateApplication } from '@/types'
 
-const CITIES = ['Islamabad', 'Lahore', 'Karachi']
+const CITIES = ['Islamabad', 'Lahore', 'Karachi', 'Others']
 const QUALIFICATIONS = ["Bachelor's", "Master's", 'M.Phil', 'PhD']
 const SUBJECTS = [
   { label: 'Mathematics', value: 'mathematics' },

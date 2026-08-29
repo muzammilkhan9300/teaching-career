@@ -24,6 +24,7 @@ import {
   LogOut,
   AlertTriangle,
   Briefcase,
+  Video,
   type LucideProps,
 } from 'lucide-react'
 import { FaInstagram, FaFacebook, FaLinkedin, FaYoutube, FaWhatsapp } from 'react-icons/fa6'
@@ -57,6 +58,7 @@ export const SearchIcon = Search
 export const LogOutIcon = LogOut
 export const AlertIcon = AlertTriangle
 export const BriefcaseIcon = Briefcase
+export const VideoIcon = Video
 
 export const WhatsappIcon = fromReactIcon(FaWhatsapp)
 export const InstagramIcon = fromReactIcon(FaInstagram)

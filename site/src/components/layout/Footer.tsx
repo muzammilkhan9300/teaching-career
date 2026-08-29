@@ -19,13 +19,8 @@ import { api, ApiError } from '@/lib/api'
 import { useSettings } from '@/lib/queries'
 import { contactMessageSchema, type ContactMessageInput } from '@/lib/validation'
 
-// The footer has always shown a separate landline number from the
-// phone used in the header/contact/home-tutor pages (settings.phone) — kept
-// as-is here rather than merged, so no displayed value changes when
-// settings loads.
-const FOOTER_PHONE = '+92 314 444 7779'
-
 const FALLBACK_SETTINGS = {
+  phone: '0312 8423576',
   email: 'info@teachingcareer.pk',
   address: 'Islamabad, Pakistan',
   social: { instagram: '#', facebook: '#', linkedin: '#', youtube: '#' },
@@ -52,6 +47,7 @@ const SOCIAL_LINKS = [
 export function Footer() {
   const { showToast } = useToast()
   const { data: settings } = useSettings()
+  const phone = settings?.phone ?? FALLBACK_SETTINGS.phone
   const email = settings?.email ?? FALLBACK_SETTINGS.email
   const address = settings?.address ?? FALLBACK_SETTINGS.address
   const social = settings?.social ?? FALLBACK_SETTINGS.social
@@ -106,8 +102,8 @@ export function Footer() {
           <ul className="mt-2 flex flex-col gap-2.5 text-sm">
             <li className="flex items-center gap-2.5">
               <PhoneIcon size={15} className="text-teal" />
-              <a href={`tel:${FOOTER_PHONE.replace(/\s+/g, '')}`} className="hover:text-teal">
-                {FOOTER_PHONE}
+              <a href={`tel:${phone.replace(/\s+/g, '')}`} className="hover:text-teal">
+                {phone}
               </a>
             </li>
             <li className="flex items-center gap-2.5">

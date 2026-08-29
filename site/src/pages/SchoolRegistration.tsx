@@ -208,7 +208,7 @@ export default function SchoolRegistration() {
                   <FormSectionTitle>Additional Information</FormSectionTitle>
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     <SelectField label="School Type" optional placeholder="Select type" options={['Private', 'Public', 'International'].map((v) => ({ label: v, value: v }))} {...register('schoolType')} />
-                    <SelectField label="Curriculum / Board" optional placeholder="Select board" options={['Cambridge', 'Federal Board', 'Matric'].map((v) => ({ label: v, value: v }))} {...register('schoolBoard')} />
+                    <SelectField label="Curriculum / Board" optional placeholder="Select board" options={['Cambridge', 'Federal Board', 'Matric', 'Others'].map((v) => ({ label: v, value: v }))} {...register('schoolBoard')} />
                     <SelectField label="Grade Levels" optional placeholder="Select grade levels" options={['Primary', 'Secondary', 'Higher Secondary'].map((v) => ({ label: v, value: v }))} {...register('schoolGrades')} />
                   </div>
                   <TextareaField label="School Description" optional placeholder="Tell candidates a little about your school..." {...register('schoolDesc')} />

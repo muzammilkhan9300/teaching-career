@@ -11,7 +11,7 @@ import { useToast } from '@/components/ui/Toast'
 import { api, ApiError } from '@/lib/api'
 import { useSettings } from '@/lib/queries'
 import { contactMessageSchema, type ContactMessageInput } from '@/lib/validation'
-import { MailIcon, PhoneIcon, SendIcon, WhatsappIcon } from '@/components/icons'
+import { MailIcon, PhoneIcon, SendIcon, VideoIcon, WhatsappIcon } from '@/components/icons'
 
 const FALLBACK = { phone: '0312 8423576', phoneSecondary: '0300 0243546', whatsapp: '923128423576' }
 
@@ -84,6 +84,22 @@ export default function Contact() {
           </a>
         </div>
       </PageHero>
+
+      <section className="py-12">
+        <div className="tc-container">
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 rounded-2xl border border-line bg-white p-8 text-center shadow-tc">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-mint text-teal-deep">
+              <VideoIcon size={22} />
+            </span>
+            <h2 className="text-xl font-extrabold text-navy">Prefer to Talk Face-to-Face?</h2>
+            <p className="text-sm leading-relaxed text-body">
+              We can arrange a Zoom meeting between a candidate and a parent so both sides can ask questions and
+              get comfortable before moving forward. Just mention it in your message below and our team will help
+              set it up.
+            </p>
+          </div>
+        </div>
+      </section>
 
       <section className="py-16">
         <div className="tc-container">
