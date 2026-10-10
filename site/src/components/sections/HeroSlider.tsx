@@ -2,10 +2,19 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import clsx from 'clsx'
 
-const SLIDES = [
-  { src: '/assets/images/candidate-hero-teacher.jpg', alt: 'A qualified teacher ready for the classroom' },
-  { src: '/assets/images/about-us-teacher.png', alt: 'A teacher connecting with students' },
-  { src: '/assets/images/about-us-family.png', alt: 'A family supported by TeachingCareer' },
+const SLIDES: Array<{ src: string; alt: string; imageClassName?: string }> = [
+  {
+    src: '/assets/images/school-annual-function-teacher-giving-speech.png',
+    alt: 'Teacher wearing a pink hijab giving a speech at a school annual function while teachers and administrators sit in a row on stage',
+  },
+  {
+    src: '/assets/images/teachers-group-discussion-study-planning.png',
+    alt: 'Pakistani teachers discussing study materials and planning together around a table outdoors',
+  },
+  {
+    src: '/assets/images/graduates-celebrating-graduation-ceremony.png',
+    alt: 'University graduates in black gowns and caps celebrating their graduation by throwing caps into the air',
+  },
 ]
 
 export function HeroSlider() {
@@ -31,7 +40,7 @@ export function HeroSlider() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: 'easeInOut' }}
-          className="h-full w-full object-cover"
+          className={clsx('h-full w-full object-cover object-center', SLIDES[index].imageClassName)}
         />
       </AnimatePresence>
       <div className="absolute inset-x-0 bottom-5 flex justify-center gap-2">

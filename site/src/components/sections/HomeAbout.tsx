@@ -14,15 +14,15 @@ export function HomeAbout() {
             className="col-span-2 h-64 w-full rounded-3xl object-cover shadow-tc-lg"
           />
           <img
-            src="/assets/images/school-placeholder-1.jpg"
-            alt="A partner school campus"
+            src="/assets/images/male-home-tutor-helping-student.png"
+            alt="Pakistani male home tutor helping a student with homework beside a laptop displaying the TeachingCareer logo"
             loading="lazy"
             decoding="async"
             className="h-40 w-full rounded-2xl object-cover shadow-tc"
           />
           <img
-            src="/assets/images/aboutlibraryimage.jpg"
-            alt="A school library resource"
+            src="/assets/images/modern-private-school-building-pakistan.png"
+            alt="Modern Pakistani school building with landscaped grounds and a welcoming entrance"
             loading="lazy"
             decoding="async"
             className="h-40 w-full rounded-2xl object-cover shadow-tc"
