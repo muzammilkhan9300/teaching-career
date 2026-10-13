@@ -59,7 +59,6 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
-
       <HomeAbout />
       <ServicesPreview />
       <HowItWorks />
