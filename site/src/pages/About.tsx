@@ -23,18 +23,18 @@ export default function About() {
         <div className="tc-container grid items-start gap-12 lg:grid-cols-2">
           <div className="relative grid grid-cols-2 gap-4">
             <img
-              src="/assets/images/teachingcareer-modern-classroom.png"
+              src="/assets/images/about-us-classroom.jpg"
               alt="Teacher teaching students in a modern classroom in Pakistan"
               loading="lazy"
               decoding="async"
-              className="col-span-2 h-64 w-full rounded-3xl object-cover shadow-tc-lg"
+              className="col-span-2 h-64 w-full rounded-3xl object-cover object-center shadow-tc-lg lg:object-[66%_50%]"
             />
             <img
-              src="/assets/images/search-teachingcareer-site-google.png"
-              alt="Google search for TeachingCareer.site on a laptop"
+              src="/assets/images/about-us-tutoring.jpg"
+              alt="A tutor guiding a student through her lesson"
               loading="lazy"
               decoding="async"
-              className="h-40 w-full rounded-2xl object-cover shadow-tc"
+              className="h-40 w-full rounded-2xl object-cover object-[80%_40%] shadow-tc"
             />
             <img
               src="/assets/images/teacher-career-opportunity-pakistan.png"

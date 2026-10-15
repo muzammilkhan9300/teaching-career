@@ -4,15 +4,19 @@ import clsx from 'clsx'
 
 const SLIDES: Array<{ src: string; alt: string; imageClassName?: string }> = [
   {
-    src: '/assets/images/school-annual-function-teacher-giving-speech.png',
+    src: '/assets/images/hero-annual-function.jpg',
     alt: 'Teacher wearing a pink hijab giving a speech at a school annual function while teachers and administrators sit in a row on stage',
+    // The speaker stands at the far left, so bias the 4:3 crop left to keep her in frame.
+    imageClassName: 'object-[12%_50%]',
   },
   {
-    src: '/assets/images/teachers-group-discussion-study-planning.png',
+    src: '/assets/images/hero-group-study.jpg',
     alt: 'Pakistani teachers discussing study materials and planning together around a table outdoors',
+    // Portrait photo: crop low enough to keep the table and flag along with the faces.
+    imageClassName: 'object-[50%_60%]',
   },
   {
-    src: '/assets/images/graduates-celebrating-graduation-ceremony.png',
+    src: '/assets/images/hero-graduation.jpg',
     alt: 'University graduates in black gowns and caps celebrating their graduation by throwing caps into the air',
   },
 ]
