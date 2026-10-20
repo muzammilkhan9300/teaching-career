@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { BookIcon, BriefcaseIcon, CheckCircleIcon, PinIcon, ShieldIcon } from '@/components/icons'
+import { getSchoolPhoto } from '@/lib/schoolPhoto'
 import type { School } from '@/types'
 
 export function SchoolCard({ school }: { school: School }) {
@@ -7,7 +8,7 @@ export function SchoolCard({ school }: { school: School }) {
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-tc transition hover:-translate-y-1 hover:shadow-tc-lg">
       <Link to={`/school-profiles/${school.id}`} className="flex flex-1 flex-col">
         <div className="relative h-40 w-full bg-mint">
-          <img src={school.photo} alt={school.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+          <img src={getSchoolPhoto(school.photo)} alt={school.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
           {school.registered ? (
             <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-teal-deep shadow-tc">
               <CheckCircleIcon size={13} />

@@ -4,6 +4,7 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { FormCard } from '@/components/ui/FormCard'
 import { Button } from '@/components/ui/Button'
 import { useMySchoolRegistration, useSchool } from '@/lib/queries'
+import { getSchoolPhoto } from '@/lib/schoolPhoto'
 import { VacancyManager } from '@/components/school-owner/VacancyManager'
 import { CheckCircleIcon, ChevronRightIcon, PinIcon, ShieldIcon } from '@/components/icons'
 
@@ -52,7 +53,7 @@ export default function SchoolProfileDetail() {
           <FormCard>
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
               <div className="h-28 w-40 shrink-0 overflow-hidden rounded-2xl bg-mint">
-                <img src={school.photo} alt={school.name} className="h-full w-full object-cover" />
+                <img src={getSchoolPhoto(school.photo)} alt={school.name} className="h-full w-full object-cover" />
               </div>
               <div className="flex flex-col items-center gap-2 sm:items-start">
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">

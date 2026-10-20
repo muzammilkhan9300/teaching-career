@@ -11,7 +11,7 @@ import { rejectSchoolSchema } from '../../validation/schoolApproval.js'
 export const adminSchoolApprovalRouter = Router()
 adminSchoolApprovalRouter.use(requireAdmin, requirePermission('reviewSubmissions'))
 
-const DEFAULT_SCHOOL_PHOTO = '/assets/images/school-placeholder-1.jpg'
+const DEFAULT_SCHOOL_PHOTO = '/assets/images/School.jpg'
 
 // Reviewable states are 'Pending' (first submission) and 'Resubmitted' (an
 // edit after a prior Approved/Rejected decision) — 'Approved'/'Rejected'

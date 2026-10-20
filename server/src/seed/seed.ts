@@ -14,7 +14,7 @@ const schoolsSeed = [
     curriculum: 'O Level',
     tag: 'O Level',
     registered: true,
-    photo: '/assets/images/School1.jpg',
+    photo: '/assets/images/School.jpg',
     subjects: 'Mathematics, Physics, English',
     about:
       'Beacon School is a registered institution offering O Level education with a focus on Mathematics, Physics, and English. The school is known for its strong academic results and supportive learning environment in Gulberg, Lahore.',
@@ -26,7 +26,7 @@ const schoolsSeed = [
     curriculum: 'Cambridge',
     tag: 'A Level',
     registered: true,
-    photo: '/assets/images/School2.jpg',
+    photo: '/assets/images/School1.jpg',
     subjects: 'English, Computer Science, Business Studies',
     about:
       'Greenwood Academy offers Cambridge curriculum education from Grade 1 to Grade 12, with a well-equipped campus in Clifton, Karachi and an emphasis on English, Computer Science, and Business Studies.',
@@ -50,7 +50,7 @@ const schoolsSeed = [
     curriculum: 'O Level',
     tag: 'O Level',
     registered: true,
-    photo: '/assets/images/school-placeholder-1.jpg',
+    photo: '/assets/images/School6.jpg',
     subjects: 'Mathematics, English, ICT',
     about:
       'The Learning Hub is a growing O Level institution in Model Town, Faisalabad, focused on Mathematics, English, and ICT with modern teaching facilities.',
@@ -62,7 +62,7 @@ const schoolsSeed = [
     curriculum: 'IB',
     tag: 'IB',
     registered: true,
-    photo: '/assets/images/school-placeholder-2.jpg',
+    photo: '/assets/images/School.jpg',
     subjects: 'Biology, Chemistry, Environmental Science',
     about:
       'Rising Star Academy delivers the IB Diploma Programme in Multan Cantt, with particular strength in Biology, Chemistry, and Environmental Science.',
@@ -74,7 +74,7 @@ const schoolsSeed = [
     curriculum: 'Punjab Board',
     tag: 'Punjab Board',
     registered: true,
-    photo: '/assets/images/school-placeholder-3.jpg',
+    photo: '/assets/images/School1.jpg',
     subjects: 'Urdu, English, Social Studies',
     about:
       'Sunrise Public School follows the Punjab Board curriculum in Satellite Town, Rawalpindi, with a focus on Urdu, English, and Social Studies for local students.',

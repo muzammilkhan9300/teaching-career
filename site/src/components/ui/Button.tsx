@@ -6,6 +6,7 @@ type Variant = 'primary' | 'outline' | 'ghost'
 
 interface CommonProps {
   variant?: Variant
+  size?: 'default' | 'large'
   icon?: ReactNode
   className?: string
   children: ReactNode
@@ -33,10 +34,13 @@ const variantClasses: Record<Variant, string> = {
 }
 
 export function Button(props: ButtonProps) {
-  const { variant = 'primary', icon, className, children, ...rest } = props
+  const { variant = 'primary', size = 'default', icon, className, children, ...rest } = props
 
   const classes = clsx(
-    'inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition-all duration-200 active:scale-[0.98]',
+    'inline-flex items-center justify-center gap-2 rounded-full font-bold transition-all duration-200 active:scale-[0.98]',
+    size === 'large'
+      ? 'min-h-12 max-w-full px-6 py-3 text-sm sm:min-h-14 sm:px-7 sm:py-4 sm:text-base'
+      : 'px-6 py-3 text-sm',
     variantClasses[variant],
     className,
   )

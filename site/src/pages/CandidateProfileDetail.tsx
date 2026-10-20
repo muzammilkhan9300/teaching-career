@@ -48,7 +48,7 @@ export default function CandidateProfileDetail() {
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
               <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-mint">
                 {candidate.photo ? (
-                  <img src={candidate.photo} alt={candidate.name} className="h-full w-full object-cover" />
+                  <img src={candidate.photo} alt={candidate.name} className="h-full w-full object-cover object-top" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-teal-deep">
                     <PersonIcon size={40} />
