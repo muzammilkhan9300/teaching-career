@@ -31,6 +31,9 @@ const candidateApplicationSchema = new Schema(
     subjectOther: { type: String },
     classes: { type: [String], default: [] },
     classOther: { type: String },
+    // Editable after verification from the candidate's Edit Profile page.
+    skills: { type: [String], default: [] },
+    about: { type: String, default: '' },
     availability: { type: String },
     preferredTime: { type: String },
     declaration: { type: Boolean, required: true },

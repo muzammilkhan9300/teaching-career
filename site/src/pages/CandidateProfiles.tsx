@@ -86,7 +86,14 @@ export default function CandidateProfiles() {
             </select>
           </div>
 
-          {isLoading ? (
+          {candidatesQuery.isError ? (
+            <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-16 text-center">
+              <p className="text-sm text-body">Candidate profiles could not be loaded. Check your connection and try again.</p>
+              <button type="button" onClick={() => void candidatesQuery.refetch()} className="rounded-full border-2 border-teal px-5 py-2 text-sm font-bold text-teal transition hover:bg-mint">
+                Retry
+              </button>
+            </div>
+          ) : isLoading ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: PER_PAGE }).map((_, i) => (
                 <CardSkeleton key={i} />

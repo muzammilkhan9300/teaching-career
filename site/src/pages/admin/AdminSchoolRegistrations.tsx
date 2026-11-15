@@ -6,6 +6,7 @@ import { DataTable, type Column } from '@/admin/components/DataTable'
 import { ListToolbar } from '@/admin/components/ListToolbar'
 import { StatusBadge } from '@/admin/components/StatusBadge'
 import { RejectReasonModal } from '@/admin/components/RejectReasonModal'
+import { Pagination } from '@/components/ui/Pagination'
 import { useToast } from '@/components/ui/Toast'
 import { ApiError } from '@/lib/api'
 import { SpinnerIcon } from '@/components/icons/admin'
@@ -117,6 +118,8 @@ export default function AdminSchoolRegistrations() {
           }
         />
       )}
+
+      {!isPending ? <Pagination page={controls.page} totalPages={controls.totalPages} onChange={controls.setPage} /> : null}
 
       {rejecting ? (
         <RejectReasonModal

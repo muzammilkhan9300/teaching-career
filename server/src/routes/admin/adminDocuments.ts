@@ -25,7 +25,7 @@ const DOCUMENT_FIELDS: Record<string, string> = {
 adminDocumentsRouter.get(
   '/pending',
   asyncHandler(async (_req, res) => {
-    const items = await CandidateApplication.find({ applicationStatus: { $in: ['New', 'Reviewed'] } }).sort({
+    const items = await CandidateApplication.find({ applicationStatus: { $in: ['New', 'Reviewed', 'Resubmitted'] } }).sort({
       createdAt: -1,
     })
     res.json(items)

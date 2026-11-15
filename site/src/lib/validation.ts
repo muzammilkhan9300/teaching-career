@@ -4,6 +4,8 @@ const MAX_PHOTO_BYTES = 2 * 1024 * 1024
 const MAX_DOC_BYTES = 5 * 1024 * 1024
 const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'webp']
 const DOC_EXTS = ['pdf', 'jpg', 'jpeg', 'png']
+// Resume / CV additionally accepts Word documents (mirrors server/src/middleware/upload.ts).
+const CV_EXTS = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png']
 const LOGO_EXTS = ['jpg', 'jpeg', 'png']
 
 function fileExt(files: FileList) {
@@ -42,7 +44,8 @@ export const candidateRegistrationSchema = z
     major: z.string().min(1, 'Please enter your field / major.'),
     institute: z.string().min(1, 'Please enter your university / institute.'),
     completionYear: z.string().optional(),
-    degreeDocument: requiredFile(MAX_DOC_BYTES, DOC_EXTS, 'Degree / qualification document is required.'),
+    // Field name kept as degreeDocument (DB/API unchanged); shown to users as "Resume / CV".
+    degreeDocument: requiredFile(MAX_DOC_BYTES, CV_EXTS, 'Resume / CV document is required.'),
     isFresher: z.enum(['yes', 'no']),
     experienceYears: z.string().optional(),
     experienceOrg: z.string().optional(),

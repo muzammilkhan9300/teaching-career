@@ -9,6 +9,7 @@ import { FormCard, FormSectionTitle } from '@/components/ui/FormCard'
 import { RequireLogin } from '@/components/auth/RequireLogin'
 import { FileField, SelectField, TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
+import { Button } from '@/components/ui/Button'
 import { ApiError } from '@/lib/api'
 import { useMySchoolRegistration, useMySchoolRegistrationMutations } from '@/lib/queries'
 import { schoolRegistrationSchema, type SchoolRegistrationInput } from '@/lib/validation'
@@ -165,6 +166,14 @@ export default function SchoolRegistration() {
                     <span className="font-extrabold">Admin feedback: </span>
                     {myRegistration.rejectionReason}
                   </p>
+                ) : null}
+                {myRegistration.registrationStatus === 'Approved' && myRegistration.publishedSchoolId ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Button to="/profile/school/edit" className="px-4 py-2 text-xs">
+                      Edit School Profile
+                    </Button>
+                    <span className="text-xs">Quick edits to your public profile go live right away — no re-review needed.</span>
+                  </div>
                 ) : null}
               </div>
             ) : null}

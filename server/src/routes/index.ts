@@ -16,7 +16,14 @@ import {
   adminCandidatesRouter,
   adminBlogPostsRouter,
   adminServicesRouter,
+  adminSchoolRequirementsRouter,
+  adminHomepageUpdatesRouter,
+  adminHomepageVideosRouter,
+  adminHeroSlidesRouter,
 } from './admin/adminResources.js'
+import { homepageRouter, homepageUpdatesRouter, schoolRequirementsRouter } from './homepage.js'
+import { adminUploadsRouter } from './admin/adminUploads.js'
+import { profileEditRouter } from './profileEdit.js'
 import {
   adminCandidateApplicationsRouter,
   adminSchoolRegistrationsRouter,
@@ -43,6 +50,9 @@ apiRouter.use('/schools', schoolsRouter)
 apiRouter.use('/candidates', candidatesRouter)
 apiRouter.use('/blog-posts', blogPostsRouter)
 apiRouter.use('/services', servicesRouter)
+apiRouter.use('/homepage', homepageRouter)
+apiRouter.use('/school-requirements', schoolRequirementsRouter)
+apiRouter.use('/updates', homepageUpdatesRouter)
 apiRouter.use('/settings', settingsRouter)
 apiRouter.use('/candidate-registrations', candidateRegistrationsRouter)
 apiRouter.use('/school-registrations', schoolRegistrationsRouter)
@@ -50,6 +60,7 @@ apiRouter.use('/home-tutor-requests', homeTutorRequestsRouter)
 apiRouter.use('/contact-messages', contactMessagesRouter)
 
 apiRouter.use('/auth', userAuthRouter)
+apiRouter.use('/profile', profileEditRouter)
 
 apiRouter.use('/admin/stats', adminStatsRouter)
 apiRouter.use('/admin/reports', adminReportsRouter)
@@ -64,6 +75,11 @@ apiRouter.use('/admin/schools', adminSchoolsRouter)
 apiRouter.use('/admin/candidates', adminCandidatesRouter)
 apiRouter.use('/admin/blog-posts', adminBlogPostsRouter)
 apiRouter.use('/admin/services', adminServicesRouter)
+apiRouter.use('/admin/school-requirements', adminSchoolRequirementsRouter)
+apiRouter.use('/admin/homepage-updates', adminHomepageUpdatesRouter)
+apiRouter.use('/admin/homepage-videos', adminHomepageVideosRouter)
+apiRouter.use('/admin/hero-slides', adminHeroSlidesRouter)
+apiRouter.use('/admin/uploads', adminUploadsRouter)
 
 apiRouter.use('/admin/candidate-applications', adminCandidateVerificationRouter)
 apiRouter.use('/admin/candidate-applications', adminCandidateApplicationsRouter)

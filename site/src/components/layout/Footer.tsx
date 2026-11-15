@@ -26,7 +26,7 @@ const FOOTER_EMAIL = 'info@teachingcareer.site'
 
 const FALLBACK_SETTINGS = {
   phone: '0312 8423576',
-  address: 'Islamabad, Pakistan',
+  address: 'Hyderabad, Pakistan',
   social: { instagram: '#', facebook: '#', linkedin: '#', youtube: '#' },
 }
 

@@ -19,6 +19,15 @@ const FIELDS: FieldConfig[] = [
   { name: 'icon', label: 'Icon', type: 'select', options: SERVICE_ICON_OPTIONS, required: true },
   { name: 'order', label: 'Display Order', type: 'number' },
   { name: 'description', label: 'Description', type: 'textarea', required: true },
+  { name: 'image', label: 'Thumbnail Image', type: 'image', hint: 'Shown in the homepage New Services tab.' },
+  {
+    name: 'learnMoreUrl',
+    label: 'Learn More Link',
+    type: 'text',
+    placeholder: '/home-tutor or https://…',
+    hint: 'Optional — defaults to the Services page.',
+  },
+  { name: 'showAsNew', label: 'Show in the homepage “New Services” tab (with a New badge)', type: 'checkbox' },
 ]
 
 export default function AdminServices() {
@@ -35,6 +44,7 @@ export default function AdminServices() {
     { key: 'order', label: 'Order', sortable: true, className: 'w-16' },
     { key: 'title', label: 'Title', sortable: true },
     { key: 'icon', label: 'Icon' },
+    { key: 'showAsNew', label: 'Homepage', render: (s) => (s.showAsNew ? <StatusBadge status="New" /> : '—') },
     { key: 'status', label: 'Status', render: (s) => <StatusBadge status={s.status} /> },
   ]
 

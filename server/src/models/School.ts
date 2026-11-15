@@ -13,6 +13,13 @@ const schoolSchema = new Schema(
     subjects: { type: String, required: true },
     about: { type: String, required: true },
     status: { type: String, enum: ['Active', 'Suspended'], default: 'Active' },
+    // Public extras the school owner can edit (routes/profileEdit.ts), synced
+    // from the owner's SchoolRegistration by lib/publishing.ts. Contact phone
+    // and email stay private on the registration, like every other listing.
+    coverImage: { type: String, default: '' },
+    address: { type: String, default: '' },
+    website: { type: String, default: '' },
+    facilities: { type: [String], default: [] },
   },
   { timestamps: true },
 )

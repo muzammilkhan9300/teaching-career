@@ -10,6 +10,16 @@ import {
   blogPostInputSchema,
   serviceInputSchema,
 } from '../../validation/adminResources.js'
+import { SchoolRequirement } from '../../models/SchoolRequirement.js'
+import { HomepageUpdate } from '../../models/HomepageUpdate.js'
+import { HomepageVideo } from '../../models/HomepageVideo.js'
+import { HeroSlide } from '../../models/HeroSlide.js'
+import {
+  schoolRequirementInputSchema,
+  homepageUpdateInputSchema,
+  homepageVideoInputSchema,
+  heroSlideInputSchema,
+} from '../../validation/homepage.js'
 import { createAdminCrudRouter } from './createAdminCrudRouter.js'
 
 export const adminVacanciesRouter = createAdminCrudRouter(Vacancy, vacancyInputSchema, {
@@ -54,4 +64,37 @@ export const adminServicesRouter = createAdminCrudRouter(Service, serviceInputSc
     unpublish: (doc) => (doc.status = 'Draft'),
     archive: (doc) => (doc.status = 'Archived'),
   },
+  imageFields: ['image'],
+})
+
+// ---- Homepage hero content (Homepage Management in the admin panel) ----
+
+const publishActions = {
+  publish: (doc: { status: string }) => (doc.status = 'Published'),
+  unpublish: (doc: { status: string }) => (doc.status = 'Draft'),
+}
+
+export const adminSchoolRequirementsRouter = createAdminCrudRouter(SchoolRequirement, schoolRequirementInputSchema, {
+  resourceName: 'SchoolRequirement',
+  statusActions: publishActions,
+})
+
+export const adminHomepageUpdatesRouter = createAdminCrudRouter(HomepageUpdate, homepageUpdateInputSchema, {
+  resourceName: 'HomepageUpdate',
+  statusActions: publishActions,
+  imageFields: ['image'],
+})
+
+export const adminHomepageVideosRouter = createAdminCrudRouter(HomepageVideo, homepageVideoInputSchema, {
+  resourceName: 'HomepageVideo',
+  statusActions: publishActions,
+})
+
+export const adminHeroSlidesRouter = createAdminCrudRouter(HeroSlide, heroSlideInputSchema, {
+  resourceName: 'HeroSlide',
+  statusActions: {
+    activate: (doc) => (doc.active = true),
+    deactivate: (doc) => (doc.active = false),
+  },
+  imageFields: ['image'],
 })

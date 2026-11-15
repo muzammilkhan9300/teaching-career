@@ -3,17 +3,25 @@ import path from 'node:path'
 import multer, { type FileFilterCallback } from 'multer'
 import type { Request } from 'express'
 import { env } from '../config/env.js'
+import { HttpError } from '../utils/HttpError.js'
 
 const UPLOADS_ROOT = env.uploadsRoot
 
-const PHOTO_FIELDS = new Set(['profilePhoto', 'schoolLogo'])
+// homepageImage: admin-uploaded hero slides, service thumbnails and update
+// logos (routes/admin/adminUploads.ts) — public, stored in uploads/homepage.
+// schoolCover: a school's public cover image (Edit Profile), stored in uploads/covers.
+const PHOTO_FIELDS = new Set(['profilePhoto', 'schoolLogo', 'homepageImage', 'schoolCover'])
 const DOCUMENT_FIELDS = new Set(['degreeDocument', 'experienceDocument', 'policeVerification'])
 
 const PHOTO_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp'])
 const DOCUMENT_EXTS = new Set(['.pdf', '.jpg', '.jpeg', '.png'])
+// degreeDocument is the "Resume / CV" upload — Word files are allowed there only.
+const CV_EXTS = new Set(['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png'])
 
 function subdirFor(fieldname: string) {
   if (fieldname === 'schoolLogo') return 'logos'
+  if (fieldname === 'homepageImage') return 'homepage'
+  if (fieldname === 'schoolCover') return 'covers'
   if (PHOTO_FIELDS.has(fieldname)) return 'photos'
   return 'documents'
 }
@@ -33,14 +41,20 @@ const storage = multer.diskStorage({
 
 function fileFilter(_req: Request, file: Express.Multer.File, callback: FileFilterCallback) {
   const ext = path.extname(file.originalname).toLowerCase()
-  const allowed = PHOTO_FIELDS.has(file.fieldname) ? PHOTO_EXTS : DOCUMENT_FIELDS.has(file.fieldname) ? DOCUMENT_EXTS : null
+  const allowed = PHOTO_FIELDS.has(file.fieldname)
+    ? PHOTO_EXTS
+    : file.fieldname === 'degreeDocument'
+      ? CV_EXTS
+      : DOCUMENT_FIELDS.has(file.fieldname)
+        ? DOCUMENT_EXTS
+        : null
 
   if (!allowed) {
-    callback(new Error(`Unexpected file field: ${file.fieldname}`))
+    callback(new HttpError(400, `Unexpected file field: ${file.fieldname}`))
     return
   }
   if (!allowed.has(ext)) {
-    callback(new Error(`File type not allowed for "${file.fieldname}". Allowed: ${[...allowed].join(', ')}`))
+    callback(new HttpError(400, `File type not allowed for "${file.fieldname}". Allowed: ${[...allowed].join(', ')}`))
     return
   }
   callback(null, true)

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { SERVICE_ICON_KEYS } from '../models/Service.js'
+import { optionalImage, optionalLink } from './homepage.js'
 
 export const vacancyInputSchema = z.object({
   title: z.string().min(2),
@@ -60,6 +61,9 @@ export const serviceInputSchema = z.object({
   description: z.string().min(1),
   icon: z.enum(SERVICE_ICON_KEYS),
   order: z.coerce.number().int().default(0),
+  showAsNew: z.boolean().default(false),
+  image: optionalImage,
+  learnMoreUrl: optionalLink,
 })
 
 export const settingsInputSchema = z.object({

@@ -11,7 +11,7 @@ const PER_PAGE = 4
 
 export default function SchoolProfiles() {
   const [page, setPage] = useState(1)
-  const { data: schools, isPending } = useSchools()
+  const { data: schools, isPending, isError, refetch } = useSchools()
 
   useEffect(() => {
     setPage(1)
@@ -37,7 +37,14 @@ export default function SchoolProfiles() {
 
       <section className="py-16">
         <div className="tc-container flex flex-col gap-8">
-          {isPending ? (
+          {isError ? (
+            <div role="alert" className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-16 text-center">
+              <p className="text-sm text-body">School profiles could not be loaded. Check your connection and try again.</p>
+              <button type="button" onClick={() => void refetch()} className="rounded-full border-2 border-teal px-5 py-2 text-sm font-bold text-teal transition hover:bg-mint">
+                Retry
+              </button>
+            </div>
+          ) : isPending ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: PER_PAGE }).map((_, i) => (
                 <CardSkeleton key={i} />

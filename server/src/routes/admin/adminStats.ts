@@ -38,8 +38,8 @@ adminStatsRouter.get(
       HomeTutorRequest.countDocuments(),
       ContactMessage.countDocuments(),
       VacancyApplication.countDocuments(),
-      CandidateApplication.countDocuments({ applicationStatus: { $in: ['New', 'Reviewed'] } }),
-      SchoolRegistration.countDocuments({ registrationStatus: { $in: ['New', 'Reviewed'] } }),
+      CandidateApplication.countDocuments({ applicationStatus: { $in: ['New', 'Reviewed', 'Resubmitted'] } }),
+      SchoolRegistration.countDocuments({ registrationStatus: { $in: ['Pending', 'Resubmitted'] } }),
     ])
 
     res.json({

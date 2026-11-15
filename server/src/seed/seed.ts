@@ -5,6 +5,9 @@ import { Vacancy } from '../models/Vacancy.js'
 import { Candidate } from '../models/Candidate.js'
 import { BlogPost } from '../models/BlogPost.js'
 import { Service } from '../models/Service.js'
+import { HeroSlide } from '../models/HeroSlide.js'
+import { SchoolRequirement } from '../models/SchoolRequirement.js'
+import { HomepageUpdate } from '../models/HomepageUpdate.js'
 
 const schoolsSeed = [
   {
@@ -351,12 +354,17 @@ const servicesSeed = [
     description: 'Parents are matched with verified home tutors suited to their child’s subject and schedule.',
     icon: 'pin',
     order: 3,
+    showAsNew: true,
+    image: '/assets/images/about-home-tutor.jpg',
+    learnMoreUrl: '/home-tutor',
   },
   {
     title: 'Candidate Verification',
     description: 'Qualification documents and experience are reviewed before a profile is shared with a school.',
     icon: 'check',
     order: 4,
+    showAsNew: true,
+    image: '/assets/images/teacher-teaching-student-classroom.png',
   },
   {
     title: 'School Recruitment Support',
@@ -372,6 +380,88 @@ const servicesSeed = [
   },
 ]
 
+// The three images the hero slider used before slides became admin-managed.
+const heroSlidesSeed = [
+  {
+    image: '/assets/images/hero-annual-function.jpg',
+    alt: 'Teacher giving a speech at a school annual function while staff sit on stage',
+    position: '12% 50%',
+    order: 1,
+  },
+  {
+    image: '/assets/images/hero-group-study.jpg',
+    alt: 'Teachers discussing study materials and planning together around a table outdoors',
+    position: '50% 60%',
+    order: 2,
+  },
+  {
+    image: '/assets/images/hero-graduation.jpg',
+    alt: 'Graduates in gowns celebrating by throwing their caps into the air',
+    position: '50% 50%',
+    order: 3,
+  },
+]
+
+const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000)
+const daysFromNow = (n: number) => new Date(Date.now() + n * 24 * 60 * 60 * 1000)
+
+// Demo requirements — sample content for local development, like the rest of this seed.
+const schoolRequirementsSeed = [
+  {
+    jobTitle: 'Mathematics Teacher (O Level)',
+    schoolName: 'Beacon School',
+    city: 'Lahore',
+    shortDescription: 'Experienced O Level Mathematics teacher for Grades 9–11, full time.',
+    detailedDescription:
+      'Beacon School requires a Mathematics teacher for O Level classes (Grades 9–11).\n\nRequirements: Master’s in Mathematics or a related field, at least 2 years of O Level teaching experience, and strong classroom communication.',
+    publishedAt: daysAgo(1),
+    expiresAt: daysFromNow(30),
+  },
+  {
+    jobTitle: 'Computer Science Teacher',
+    schoolName: 'Greenwood Academy',
+    city: 'Karachi',
+    shortDescription: 'Computer Science teacher for Cambridge curriculum, Grades 6–10.',
+    detailedDescription:
+      'Greenwood Academy is looking for a Computer Science teacher for its Cambridge stream.\n\nRequirements: BS Computer Science (or equivalent) and practical knowledge of Python and basic web development.',
+    publishedAt: daysAgo(3),
+    expiresAt: daysFromNow(21),
+  },
+  {
+    jobTitle: 'Primary English Teacher',
+    schoolName: 'City Grammar School',
+    city: 'Islamabad',
+    shortDescription: 'Primary English teacher with strong phonics and spoken English skills.',
+    detailedDescription: 'City Grammar School requires a Primary English teacher for Grades 1–5. Fresh graduates with strong spoken English are encouraged.',
+    publishedAt: daysAgo(12),
+    expiresAt: null,
+  },
+]
+
+const homepageUpdatesSeed = [
+  {
+    title: 'Greenwood Academy joins TeachingCareer',
+    description: 'Greenwood Academy, Karachi, is now registered with TeachingCareer for teacher recruitment.',
+    image: '/assets/images/School1.jpg',
+    publishedAt: daysAgo(2),
+    readMoreUrl: '/school-profiles',
+  },
+  {
+    title: 'Home tutor requests now open in all cities',
+    description: 'Parents across Pakistan can now request a verified home tutor online.',
+    image: '/assets/images/about-home-tutor.jpg',
+    publishedAt: daysAgo(6),
+    readMoreUrl: '/home-tutor',
+  },
+  {
+    title: 'How we verify every teacher',
+    description: 'Read how TeachingCareer reviews qualifications and experience before shortlisting candidates.',
+    image: '',
+    publishedAt: daysAgo(14),
+    readMoreUrl: '/blog/teacher-verification-explained',
+  },
+]
+
 async function seed() {
   await connectDb()
 
@@ -381,6 +471,9 @@ async function seed() {
     Candidate.deleteMany({}),
     BlogPost.deleteMany({}),
     Service.deleteMany({}),
+    HeroSlide.deleteMany({}),
+    SchoolRequirement.deleteMany({}),
+    HomepageUpdate.deleteMany({}),
   ])
 
   const schools = await School.insertMany(schoolsSeed)
@@ -397,9 +490,13 @@ async function seed() {
   await Candidate.insertMany(candidatesSeed)
   await BlogPost.insertMany(blogPostsSeed)
   await Service.insertMany(servicesSeed)
+  await HeroSlide.insertMany(heroSlidesSeed)
+  await SchoolRequirement.insertMany(schoolRequirementsSeed)
+  await HomepageUpdate.insertMany(homepageUpdatesSeed)
 
   console.log(
-    `[seed] inserted ${schools.length} schools, ${vacanciesSeed.length} vacancies, ${candidatesSeed.length} candidates, ${blogPostsSeed.length} blog posts, ${servicesSeed.length} services`,
+    `[seed] inserted ${schools.length} schools, ${vacanciesSeed.length} vacancies, ${candidatesSeed.length} candidates, ${blogPostsSeed.length} blog posts, ${servicesSeed.length} services, ` +
+      `${heroSlidesSeed.length} hero slides, ${schoolRequirementsSeed.length} school requirements, ${homepageUpdatesSeed.length} homepage updates`,
   )
 
   await mongoose.disconnect()

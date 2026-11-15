@@ -11,6 +11,7 @@ const STATUS_STYLES: Record<string, string> = {
   Resubmitted: 'bg-blue-50 text-blue-700',
   Active: 'bg-mint text-teal-deep',
   Suspended: 'bg-red-50 text-red-600',
+  Inactive: 'bg-slate-100 text-slate-600',
   Verified: 'bg-mint text-teal-deep',
   Published: 'bg-mint text-teal-deep',
   Draft: 'bg-amber-50 text-amber-700',

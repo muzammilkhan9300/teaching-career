@@ -6,6 +6,12 @@ import { requireAdmin } from '../../middleware/requireAdmin.js'
 import { requirePermission } from '../../lib/permissions.js'
 import { logAction } from '../../lib/audit.js'
 import { HttpError, NotFoundError } from '../../utils/HttpError.js'
+import { deleteUploadedFile } from '../../lib/files.js'
+
+/** Only files this app uploaded for homepage content are ever cleaned up — never bundled /assets images. */
+function deleteHomepageImage(path: unknown) {
+  if (typeof path === 'string' && path.startsWith('/uploads/homepage/')) deleteUploadedFile(path)
+}
 
 interface CrudRouterOptions {
   /** Human/audit-log name for this resource, e.g. "Vacancy". */
@@ -19,6 +25,12 @@ interface CrudRouterOptions {
    * a status enum.
    */
   statusActions?: Record<string, (doc: any) => void>
+  /**
+   * Fields holding an uploaded image path (/uploads/homepage/...). The
+   * previous file is deleted when an update replaces it or the record is
+   * deleted, so replaced images don't pile up on disk.
+   */
+  imageFields?: string[]
 }
 
 /**
@@ -57,8 +69,12 @@ export function createAdminCrudRouter(model: Model<any>, schema: ZodType<any>, o
     requirePermission('manageContent'),
     asyncHandler(async (req, res) => {
       const data = schema.parse(req.body)
+      const previous = options.imageFields?.length ? await model.findById(req.params.id).lean<Record<string, unknown>>() : null
       const doc = await model.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true })
       if (!doc) throw new NotFoundError()
+      for (const field of options.imageFields ?? []) {
+        if (previous && previous[field] !== doc.get(field)) deleteHomepageImage(previous[field])
+      }
       logAction(req, 'update', options.resourceName, doc.id)
       res.json(doc)
     }),
@@ -90,6 +106,7 @@ export function createAdminCrudRouter(model: Model<any>, schema: ZodType<any>, o
     asyncHandler(async (req, res) => {
       const doc = await model.findByIdAndDelete(req.params.id)
       if (!doc) throw new NotFoundError()
+      for (const field of options.imageFields ?? []) deleteHomepageImage(doc.get(field))
       logAction(req, 'delete', options.resourceName, req.params.id)
       res.status(204).end()
     }),

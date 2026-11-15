@@ -179,7 +179,7 @@ export default function AdminVacancies() {
         <ResourceFormModal
           title={editing === 'new' ? 'Add Vacancy' : 'Edit Vacancy'}
           fields={FIELDS}
-          initialValues={(editing === 'new' ? { teachersNeeded: 1 } : editing) as Record<string, unknown>}
+          initialValues={(editing === 'new' ? { teachersNeeded: 1, active: true } : editing) as Record<string, unknown>}
           isSubmitting={create.isPending || update.isPending}
           error={formError}
           onSubmit={handleSubmit}

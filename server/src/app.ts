@@ -17,7 +17,20 @@ export function createApp() {
   // and audit-log IPs.
   if (env.isProduction) app.set('trust proxy', 1)
 
-  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }))
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: {
+        directives: {
+          // Homepage videos: thumbnails come from YouTube's image CDN and the
+          // player is the privacy-enhanced youtube-nocookie embed — nothing
+          // else external is allowed beyond helmet's defaults.
+          'img-src': ["'self'", 'data:', 'https://i.ytimg.com'],
+          'frame-src': ['https://www.youtube-nocookie.com'],
+        },
+      },
+    }),
+  )
   app.use(cors({ origin: env.clientOrigin, credentials: true }))
   app.use(morgan('dev'))
   app.use(express.json())
@@ -31,6 +44,8 @@ export function createApp() {
   // candidate application is verified or rejected.
   app.use('/uploads/photos', express.static(path.join(env.uploadsRoot, 'photos')))
   app.use('/uploads/logos', express.static(path.join(env.uploadsRoot, 'logos')))
+  app.use('/uploads/covers', express.static(path.join(env.uploadsRoot, 'covers')))
+  app.use('/uploads/homepage', express.static(path.join(env.uploadsRoot, 'homepage')))
   app.use('/api', apiRouter)
 
   // This one process also serves the built React app when it's present (see

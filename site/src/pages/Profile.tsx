@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
@@ -9,7 +9,124 @@ import { useToast } from '@/components/ui/Toast'
 import { ApiError } from '@/lib/api'
 import { PersonIcon, LogOutIcon, ShieldIcon, BriefcaseIcon } from '@/components/icons'
 import { useUserAuth } from '@/auth/UserAuthContext'
-import { useMySchoolRegistration, useMyVacancies } from '@/lib/queries'
+import { useMyCandidateApplication, useMySchoolRegistration, useMyVacancies } from '@/lib/queries'
+import { EditIcon } from '@/components/icons/admin'
+import type { MyCandidateApplication, MySchoolRegistration } from '@/types'
+
+type Tone = 'live' | 'review' | 'changes' | 'none'
+
+const TONE_CLASSES: Record<Tone, string> = {
+  live: 'bg-mint text-teal-deep',
+  review: 'bg-amber-50 text-amber-700',
+  changes: 'bg-red-50 text-red-600',
+  none: 'bg-slate-100 text-slate-600',
+}
+
+/** One "where do I stand" card on the account page: status + the next action. */
+function StatusCard({
+  icon: Icon,
+  title,
+  status,
+  tone,
+  text,
+  children,
+}: {
+  icon: typeof PersonIcon
+  title: string
+  status: string
+  tone: Tone
+  text: string
+  children: ReactNode
+}) {
+  return (
+    <div className="mb-4 rounded-2xl border border-line bg-mint/30 p-4">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-teal-deep shadow-tc">
+          <Icon size={18} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-extrabold text-navy">{title}</p>
+            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${TONE_CLASSES[tone]}`}>{status}</span>
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-body">{text}</p>
+        </div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 pl-[52px]">{children}</div>
+    </div>
+  )
+}
+
+const smallButton = 'px-4 py-2 text-xs'
+
+function CandidateCard({ app, loading }: { app: MyCandidateApplication | null | undefined; loading: boolean }) {
+  if (loading) return null
+  if (!app) {
+    return (
+      <StatusCard icon={PersonIcon} title="Candidate profile" status="Not registered" tone="none" text="Register as a teaching candidate to get a public profile you can edit any time after verification.">
+        <Button to="/candidate-registration" className={smallButton}>Register as a Candidate</Button>
+      </StatusCard>
+    )
+  }
+  if (app.applicationStatus === 'Verified' && app.publishedCandidateId) {
+    return (
+      <StatusCard icon={PersonIcon} title="Candidate profile" status="Verified" tone="live" text="Your profile is live. Edit your photo, about me, skills, education and contact details at any time.">
+        <Button to="/profile/candidate/edit" icon={<EditIcon size={13} />} className={smallButton}>Edit Profile</Button>
+        <Button to={`/candidate-profiles/${app.publishedCandidateId}`} variant="outline" className={smallButton}>View Public Profile</Button>
+      </StatusCard>
+    )
+  }
+  if (app.applicationStatus === 'Rejected') {
+    return (
+      <StatusCard icon={PersonIcon} title="Candidate profile" status="Needs changes" tone="changes" text="Your registration needs changes before it can be verified. Review the feedback, update it and resubmit.">
+        <Button to="/candidate-registration" className={smallButton}>Update &amp; Resubmit</Button>
+      </StatusCard>
+    )
+  }
+  return (
+    <StatusCard icon={PersonIcon} title="Candidate profile" status="Under review" tone="review" text="The TeachingCareer team is reviewing your registration. You'll be able to edit your profile once it's verified.">
+      <Button to="/candidate-registration" variant="outline" className={smallButton}>View Application</Button>
+    </StatusCard>
+  )
+}
+
+function SchoolCard({ reg, loading, vacancyCount }: { reg: MySchoolRegistration | null | undefined; loading: boolean; vacancyCount: number | null }) {
+  if (loading) return null
+  if (!reg) {
+    return (
+      <StatusCard icon={BriefcaseIcon} title="School profile" status="Not registered" tone="none" text="Running a school? Register it to get a public school profile and post vacancies.">
+        <Button to="/school-registration" variant="outline" className={smallButton}>Register Your School</Button>
+      </StatusCard>
+    )
+  }
+  if (reg.registrationStatus === 'Approved' && reg.publishedSchoolId) {
+    return (
+      <StatusCard
+        icon={BriefcaseIcon}
+        title={reg.schoolName}
+        status="Approved"
+        tone="live"
+        text={`Your school profile is live · ${vacancyCount ?? 0} ${(vacancyCount ?? 0) === 1 ? 'vacancy' : 'vacancies'} posted.`}
+      >
+        <Button to="/profile/school/edit" icon={<EditIcon size={13} />} className={smallButton}>Edit School Profile</Button>
+        <Button to={`/school-profiles/${reg.publishedSchoolId}`} variant="outline" className={smallButton}>View Public Profile</Button>
+        <Button to="/manage-vacancies" variant="outline" className={smallButton}>Manage Vacancies</Button>
+      </StatusCard>
+    )
+  }
+  if (reg.registrationStatus === 'Rejected') {
+    return (
+      <StatusCard icon={BriefcaseIcon} title={reg.schoolName} status="Needs changes" tone="changes" text="Your school registration needs changes before it can be approved. Review the feedback, update it and resubmit.">
+        <Button to="/school-registration" className={smallButton}>Update &amp; Resubmit</Button>
+      </StatusCard>
+    )
+  }
+  return (
+    <StatusCard icon={BriefcaseIcon} title={reg.schoolName} status="Under review" tone="review" text="The TeachingCareer team is reviewing your school registration. You'll be able to edit your profile once it's approved.">
+      <Button to="/school-registration" variant="outline" className={smallButton}>View Registration</Button>
+    </StatusCard>
+  )
+}
 
 const ROLE_LABELS: Record<string, string> = {
   user: 'Normal User',
@@ -25,9 +142,10 @@ export default function Profile() {
   const [name, setName] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
-  const { data: myRegistration } = useMySchoolRegistration()
-  const hasPublishedSchool = Boolean(myRegistration?.publishedSchoolId)
+  const { data: myRegistration, isLoading: registrationLoading } = useMySchoolRegistration()
+  const hasPublishedSchool = Boolean(myRegistration?.publishedSchoolId) && myRegistration?.registrationStatus === 'Approved'
   const { data: myVacancies } = useMyVacancies(hasPublishedSchool)
+  const { data: myApplication, isLoading: applicationLoading } = useMyCandidateApplication()
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) navigate('/login')
@@ -69,7 +187,7 @@ export default function Profile() {
 
       <section className="py-16">
         <div className="tc-container flex justify-center">
-          <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 shadow-tc">
+          <div className="w-full max-w-xl rounded-3xl border border-line bg-white p-6 shadow-tc sm:p-8">
             <div className="mb-6 flex items-center gap-4">
               <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-mint text-teal-deep">
                 {user.avatarUrl ? (
@@ -94,23 +212,14 @@ export default function Profile() {
               </Button>
             ) : null}
 
-            {hasPublishedSchool ? (
-              <div className="mb-6 flex items-center justify-between gap-3 rounded-2xl bg-mint/50 p-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-teal-deep shadow-tc">
-                    <BriefcaseIcon size={18} />
-                  </span>
-                  <div>
-                    <p className="text-sm font-extrabold text-navy">{myRegistration?.schoolName}</p>
-                    <p className="text-xs text-body">
-                      {myVacancies?.length ?? 0} {(myVacancies?.length ?? 0) === 1 ? 'vacancy' : 'vacancies'} posted
-                    </p>
-                  </div>
-                </div>
-                <Button to="/manage-vacancies" variant="outline" className="shrink-0 px-4 py-2 text-xs">
-                  Manage Vacancies
-                </Button>
-              </div>
+            {/* Always shown to regular accounts (and to staff who happen to have a
+                registration), so every user can see where they stand and how to
+                edit — not only once they're verified. */}
+            {user.role === 'user' || myApplication ? (
+              <CandidateCard app={myApplication} loading={applicationLoading} />
+            ) : null}
+            {user.role === 'user' || myRegistration ? (
+              <SchoolCard reg={myRegistration} loading={registrationLoading} vacancyCount={hasPublishedSchool ? (myVacancies?.length ?? 0) : null} />
             ) : null}
 
             <form onSubmit={handleSave} className="flex flex-col gap-4">

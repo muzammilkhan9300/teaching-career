@@ -72,7 +72,20 @@ export function useBlogPostMutations() {
 }
 
 export function useServiceMutations() {
-  return useCrudMutations<Service>('services', [['admin', 'services'], ['services']])
+  // ['homepage'] too: services marked "show as new" feed the hero's New Services tab.
+  return useCrudMutations<Service>('services', [['admin', 'services'], ['services'], ['homepage']])
+}
+
+// ---- Homepage Management (hero slider + the hero info box's content) ----
+
+export type HomepageResource = 'school-requirements' | 'homepage-updates' | 'homepage-videos' | 'hero-slides'
+
+export function useAdminHomepageList<T>(resource: HomepageResource) {
+  return useQuery({ queryKey: ['admin', resource], queryFn: () => api.get<T[]>(`/admin/${resource}`) })
+}
+
+export function useHomepageContentMutations<T extends { id: string }>(resource: HomepageResource) {
+  return useCrudMutations<T>(resource, [['admin', resource], ['homepage'], ['school-requirements'], ['school-requirement'], ['updates']])
 }
 
 // ---- Submission inboxes: read + status update + delete ----

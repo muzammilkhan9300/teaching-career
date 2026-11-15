@@ -12,7 +12,10 @@ import {
   InboxIcon,
   LogOutIcon,
   ExternalLinkIcon,
+  ImageIcon,
+  MegaphoneIcon,
 } from '@/components/icons/admin'
+import { VideoIcon } from '@/components/icons'
 import { MenuIcon, BookIcon, ShieldIcon } from '@/components/icons'
 import type { ComponentType } from 'react'
 import type { LucideProps } from 'lucide-react'
@@ -31,8 +34,17 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Schools', to: '/admin/schools', icon: BuildingIcon },
   { label: 'Candidates', to: '/admin/candidates', icon: UsersIcon },
   { label: 'Blogs', to: '/admin/blogs', icon: BookIcon },
-  { label: 'Services', to: '/admin/services', icon: ShieldIcon },
   { label: 'Documents', to: '/admin/documents', icon: InboxIcon, requires: 'reviewSubmissions' },
+]
+
+// Everything shown in the homepage hero. Services lives here too: the same
+// records feed both the Services page and the hero's "New Services" tab.
+const HOMEPAGE_ITEMS: NavItem[] = [
+  { label: 'Hero Slider', to: '/admin/hero-slides', icon: ImageIcon },
+  { label: 'School Requirements', to: '/admin/school-requirements', icon: VacancyIcon },
+  { label: 'Services & New Services', to: '/admin/services', icon: ShieldIcon },
+  { label: 'Latest Updates', to: '/admin/homepage-updates', icon: MegaphoneIcon },
+  { label: 'YouTube Videos', to: '/admin/homepage-videos', icon: VideoIcon },
 ]
 
 const INBOX_ITEMS: NavItem[] = [
@@ -93,6 +105,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="flex flex-1 flex-col gap-6 overflow-y-auto">
         <div className="flex flex-col gap-1">
           {visibleNav.map((item) => (
+            <NavLinkItem key={item.to} item={item} onNavigate={onNavigate} />
+          ))}
+        </div>
+        <div className="flex flex-col gap-1">
+          <p className="px-3.5 text-xs font-bold uppercase tracking-wide text-white/40">Homepage</p>
+          {HOMEPAGE_ITEMS.map((item) => (
             <NavLinkItem key={item.to} item={item} onNavigate={onNavigate} />
           ))}
         </div>

@@ -15,4 +15,6 @@ export {
   EyeOff as EyeOffIcon,
   UserPlus as UserPlusIcon,
   ExternalLink as ExternalLinkIcon,
+  Image as ImageIcon,
+  Megaphone as MegaphoneIcon,
 } from 'lucide-react'

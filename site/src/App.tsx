@@ -29,6 +29,9 @@ const CandidateProfileDetail = lazy(() => import('@/pages/CandidateProfileDetail
 const SchoolProfiles = lazy(() => import('@/pages/SchoolProfiles'))
 const SchoolProfileDetail = lazy(() => import('@/pages/SchoolProfileDetail'))
 const VacancyDetail = lazy(() => import('@/pages/VacancyDetail'))
+const SchoolRequirements = lazy(() => import('@/pages/SchoolRequirements'))
+const SchoolRequirementDetail = lazy(() => import('@/pages/SchoolRequirementDetail'))
+const Updates = lazy(() => import('@/pages/Updates'))
 const Blog = lazy(() => import('@/pages/Blog'))
 const BlogSingle = lazy(() => import('@/pages/BlogSingle'))
 const RegistrationSuccess = lazy(() => import('@/pages/RegistrationSuccess'))
@@ -39,6 +42,8 @@ const Signup = lazy(() => import('@/pages/Signup'))
 const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'))
 const Profile = lazy(() => import('@/pages/Profile'))
+const EditCandidateProfile = lazy(() => import('@/pages/EditCandidateProfile'))
+const EditSchoolProfile = lazy(() => import('@/pages/EditSchoolProfile'))
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'))
 const AdminVacancies = lazy(() => import('@/pages/admin/AdminVacancies'))
@@ -54,6 +59,10 @@ const AdminAuditLogs = lazy(() => import('@/pages/admin/AdminAuditLogs'))
 const AdminReports = lazy(() => import('@/pages/admin/AdminReports'))
 const AdminSettings = lazy(() => import('@/pages/admin/AdminSettings'))
 const AdminSubmissions = lazy(() => import('@/pages/admin/AdminSubmissions'))
+const AdminHeroSlides = lazy(() => import('@/pages/admin/homepage/AdminHeroSlides'))
+const AdminSchoolRequirements = lazy(() => import('@/pages/admin/homepage/AdminSchoolRequirements'))
+const AdminHomepageUpdates = lazy(() => import('@/pages/admin/homepage/AdminHomepageUpdates'))
+const AdminHomepageVideos = lazy(() => import('@/pages/admin/homepage/AdminHomepageVideos'))
 
 // Home Tutor Requests / Contact Messages / Vacancy Applications use the
 // generic status+delete inbox; Candidate Applications and School
@@ -98,6 +107,10 @@ function AppRoutes() {
               <Route path="candidates" element={<AdminCandidates />} />
               <Route path="blogs" element={<AdminBlogs />} />
               <Route path="services" element={<AdminServices />} />
+              <Route path="hero-slides" element={<AdminHeroSlides />} />
+              <Route path="school-requirements" element={<AdminSchoolRequirements />} />
+              <Route path="homepage-updates" element={<AdminHomepageUpdates />} />
+              <Route path="homepage-videos" element={<AdminHomepageVideos />} />
               <Route path="documents" element={<AdminDocuments />} />
               <Route path="candidate-applications" element={<AdminCandidateApplications />} />
               <Route path="school-registrations" element={<AdminSchoolRegistrations />} />
@@ -125,6 +138,9 @@ function AppRoutes() {
             <Route path="school-profiles" element={<SchoolProfiles />} />
             <Route path="school-profiles/:id" element={<SchoolProfileDetail />} />
             <Route path="vacancy/:id" element={<VacancyDetail />} />
+            <Route path="school-requirements" element={<SchoolRequirements />} />
+            <Route path="school-requirements/:id" element={<SchoolRequirementDetail />} />
+            <Route path="updates" element={<Updates />} />
             <Route path="blog" element={<Blog />} />
             <Route path="blog/:slug" element={<BlogSingle />} />
             <Route path="registration-success" element={<RegistrationSuccess />} />
@@ -133,6 +149,8 @@ function AppRoutes() {
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="profile/candidate/edit" element={<EditCandidateProfile />} />
+            <Route path="profile/school/edit" element={<EditSchoolProfile />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

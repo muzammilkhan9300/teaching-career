@@ -8,7 +8,7 @@ import { SpinnerIcon } from '@/components/icons/admin'
 import { DocUploadIcon, LockIcon } from '@/components/icons'
 
 const DOC_FIELDS: { field: string; pathKey: string; label: string }[] = [
-  { field: 'degreeDocument', pathKey: 'degreeDocumentPath', label: 'Degree / Qualification' },
+  { field: 'degreeDocument', pathKey: 'degreeDocumentPath', label: 'Resume / CV' },
   { field: 'experienceDocument', pathKey: 'experienceDocumentPath', label: 'Experience Letter' },
   { field: 'policeVerification', pathKey: 'policeVerificationPath', label: 'Police Verification' },
 ]

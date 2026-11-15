@@ -26,6 +26,11 @@ const schoolRegistrationSchema = new Schema(
     schoolBoard: { type: String },
     schoolGrades: { type: String },
     schoolDesc: { type: String },
+    // Editable after approval from the school's Edit Profile page.
+    schoolCoverPath: { type: String },
+    schoolAddress: { type: String },
+    schoolEmail: { type: String }, // private contact email (never shown publicly)
+    schoolFacilities: { type: [String], default: [] },
     registrationStatus: { type: String, enum: SCHOOL_REGISTRATION_STATUSES, default: 'Pending' },
     rejectionReason: { type: String },
     submittedAt: { type: Date },

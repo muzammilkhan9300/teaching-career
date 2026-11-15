@@ -1,6 +1,44 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from './api'
-import type { BlogPost, Candidate, CandidatesPage, MyCandidateApplication, MySchoolRegistration, School, SchoolDetail, Service, Settings, Vacancy } from '@/types'
+import { useUserAuth } from '@/auth/UserAuthContext'
+import type {
+  BlogPost,
+  Candidate,
+  CandidatesPage,
+  HomepageContent,
+  HomepageUpdate,
+  MyCandidateApplication,
+  MySchoolRegistration,
+  School,
+  SchoolDetail,
+  SchoolRequirement,
+  Service,
+  Settings,
+  Vacancy,
+} from '@/types'
+
+// ---- Homepage hero (slides + the three info-box tabs, one request) ----
+
+export function useHomepageContent() {
+  return useQuery({ queryKey: ['homepage'], queryFn: () => api.get<HomepageContent>('/homepage') })
+}
+
+export function useHomepageUpdates() {
+  return useQuery({ queryKey: ['updates'], queryFn: () => api.get<HomepageUpdate[]>('/updates') })
+}
+
+export function useSchoolRequirements() {
+  return useQuery({ queryKey: ['school-requirements'], queryFn: () => api.get<SchoolRequirement[]>('/school-requirements') })
+}
+
+export function useSchoolRequirement(id: string | undefined) {
+  return useQuery({
+    queryKey: ['school-requirement', id],
+    queryFn: () => api.get<SchoolRequirement>(`/school-requirements/${id}`),
+    enabled: Boolean(id),
+    retry: false,
+  })
+}
 
 export function useVacancies() {
   return useQuery({ queryKey: ['vacancies'], queryFn: () => api.get<Vacancy[]>('/vacancies') })
@@ -17,8 +55,16 @@ export function useVacancy(id: string | undefined) {
 
 // ---- A logged-in school owner's own vacancies (self-service post/edit/delete) ----
 
+// The "mine" queries below are keyed by the signed-in user's id and only run
+// while signed in: a visitor who logs in (e.g. via the header modal) gets a
+// fresh fetch under a new key instead of a stale 401 cached from before login.
 export function useMyVacancies(enabled = true) {
-  return useQuery({ queryKey: ['vacancies', 'mine'], queryFn: () => api.get<Vacancy[]>('/vacancies/mine'), enabled })
+  const { user } = useUserAuth()
+  return useQuery({
+    queryKey: ['vacancies', 'mine', user?.id],
+    queryFn: () => api.get<Vacancy[]>('/vacancies/mine'),
+    enabled: enabled && Boolean(user),
+  })
 }
 
 export function useMyVacancyMutations() {
@@ -123,8 +169,10 @@ export function useSettings() {
 // ---- A logged-in candidate's own application (self-service edit/resubmit) ----
 
 export function useMyCandidateApplication() {
+  const { user } = useUserAuth()
   return useQuery({
-    queryKey: ['candidate-applications', 'mine'],
+    queryKey: ['candidate-applications', 'mine', user?.id],
+    enabled: Boolean(user),
     // Server returns 200 + null when there's no application yet — that's a
     // normal state for this query, not an error, so no 404 to catch here.
     queryFn: () => api.get<MyCandidateApplication | null>('/candidate-registrations/mine'),
@@ -150,8 +198,10 @@ export function useMyCandidateApplicationMutations() {
 // ---- A logged-in school owner's own registration (self-service edit/resubmit) ----
 
 export function useMySchoolRegistration() {
+  const { user } = useUserAuth()
   return useQuery({
-    queryKey: ['school-registrations', 'mine'],
+    queryKey: ['school-registrations', 'mine', user?.id],
+    enabled: Boolean(user),
     // Server returns 200 + null when there's no registration yet — that's a
     // normal state for this query, not an error, so no 404 to catch here.
     queryFn: () => api.get<MySchoolRegistration | null>('/school-registrations/mine'),
@@ -172,4 +222,33 @@ export function useMySchoolRegistrationMutations() {
   })
 
   return { create, resubmit }
+}
+
+// ---- Self-service Edit Profile (published candidate / approved school) ----
+// Goes live directly without re-review; documents are never part of these requests.
+
+export function useUpdateCandidateProfile() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      api.putForm<{ application: MyCandidateApplication; candidate: Candidate }>('/profile/candidate', formData),
+    onSuccess: ({ candidate }) => {
+      queryClient.invalidateQueries({ queryKey: ['candidate-applications', 'mine'] })
+      queryClient.invalidateQueries({ queryKey: ['candidate', candidate.id] })
+      queryClient.invalidateQueries({ queryKey: ['candidates'] })
+    },
+  })
+}
+
+export function useUpdateSchoolProfile() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      api.putForm<{ registration: MySchoolRegistration; school: School }>('/profile/school', formData),
+    onSuccess: ({ school }) => {
+      queryClient.invalidateQueries({ queryKey: ['school-registrations', 'mine'] })
+      queryClient.invalidateQueries({ queryKey: ['school', school.id] })
+      queryClient.invalidateQueries({ queryKey: ['schools'] })
+    },
+  })
 }

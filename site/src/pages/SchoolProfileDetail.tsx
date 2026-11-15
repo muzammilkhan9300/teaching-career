@@ -6,11 +6,13 @@ import { Button } from '@/components/ui/Button'
 import { useMySchoolRegistration, useSchool } from '@/lib/queries'
 import { getSchoolPhoto } from '@/lib/schoolPhoto'
 import { VacancyManager } from '@/components/school-owner/VacancyManager'
-import { CheckCircleIcon, ChevronRightIcon, PinIcon, ShieldIcon } from '@/components/icons'
+import { CheckCircleIcon, ChevronRightIcon, GlobeIcon, PinIcon, ShieldIcon } from '@/components/icons'
+import { EditIcon } from '@/components/icons/admin'
+import { ApiError } from '@/lib/api'
 
 export default function SchoolProfileDetail() {
   const { id } = useParams<{ id: string }>()
-  const { data: school, isPending } = useSchool(id)
+  const { data: school, isPending, isError, error, refetch } = useSchool(id)
   const { data: myRegistration } = useMySchoolRegistration()
   const isOwner = Boolean(school) && myRegistration?.publishedSchoolId === id
 
@@ -18,6 +20,16 @@ export default function SchoolProfileDetail() {
     return (
       <section className="tc-container flex min-h-[50vh] items-center justify-center py-24">
         <span className="h-10 w-10 animate-spin rounded-full border-4 border-mint border-t-teal" aria-label="Loading" />
+      </section>
+    )
+  }
+
+  if (isError && !(error instanceof ApiError && error.status === 404)) {
+    return (
+      <section className="tc-container flex flex-col items-center gap-4 py-24 text-center" role="alert">
+        <h1 className="text-2xl font-extrabold text-navy">School Profile Could Not Be Loaded</h1>
+        <p className="max-w-md text-body">Check your connection and try loading this profile again.</p>
+        <Button onClick={() => void refetch()}>Retry</Button>
       </section>
     )
   }
@@ -51,6 +63,11 @@ export default function SchoolProfileDetail() {
       <section className="py-16">
         <div className="tc-container">
           <FormCard>
+            {school.coverImage ? (
+              <div className="-mx-6 -mt-6 mb-6 h-40 overflow-hidden rounded-t-3xl sm:-mx-10 sm:-mt-10 sm:mb-8 sm:h-56">
+                <img src={school.coverImage} alt="" className="h-full w-full object-cover" />
+              </div>
+            ) : null}
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
               <div className="h-28 w-40 shrink-0 overflow-hidden rounded-2xl bg-mint">
                 <img src={getSchoolPhoto(school.photo)} alt={school.name} className="h-full w-full object-cover" />
@@ -69,6 +86,13 @@ export default function SchoolProfileDetail() {
                   <PinIcon size={13} />
                   {school.city}, {school.area} &middot; {school.curriculum}
                 </p>
+                {school.address ? <p className="text-sm text-body">{school.address}</p> : null}
+                {school.website ? (
+                  <a href={school.website} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1 text-sm font-semibold text-teal-deep hover:underline">
+                    <GlobeIcon size={13} />
+                    {school.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  </a>
+                ) : null}
               </div>
             </div>
 
@@ -78,8 +102,8 @@ export default function SchoolProfileDetail() {
                   <ShieldIcon size={16} className="shrink-0 text-teal-deep" />
                   You manage this school&rsquo;s profile.
                 </p>
-                <Button to="/school-registration" variant="outline" className="shrink-0 px-4 py-2 text-xs">
-                  Edit School Details
+                <Button to="/profile/school/edit" variant="outline" icon={<EditIcon size={14} />} className="shrink-0 px-4 py-2 text-xs">
+                  Edit Profile
                 </Button>
               </div>
             ) : null}
@@ -88,8 +112,21 @@ export default function SchoolProfileDetail() {
 
             <div>
               <p className="mb-2 text-xs font-bold uppercase tracking-wide text-body">About</p>
-              <p className="leading-relaxed text-body">{school.about}</p>
+              <p className="whitespace-pre-line leading-relaxed text-body">{school.about}</p>
             </div>
+
+            {school.facilities && school.facilities.length > 0 ? (
+              <div className="mt-6">
+                <p className="mb-3 text-xs font-bold uppercase tracking-wide text-body">Facilities</p>
+                <div className="flex flex-wrap gap-2">
+                  {school.facilities.map((f) => (
+                    <span key={f} className="rounded-full bg-mint px-3 py-1.5 text-xs font-semibold text-teal-deep">
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <hr className="my-8 border-line" />
 

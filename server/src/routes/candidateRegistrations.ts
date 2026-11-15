@@ -51,7 +51,7 @@ candidateRegistrationsRouter.put(
     // must always provide fresh copies — the previous stored path is gone.
     const degreeDocument = files.degreeDocument?.[0]
     if (!degreeDocument && !application.degreeDocumentPath) {
-      throw new HttpError(400, 'Degree / qualification document is required.')
+      throw new HttpError(400, 'Resume / CV document is required.')
     }
     if (body.isFresher === 'no' && !files.experienceDocument?.[0] && !application.experienceDocumentPath) {
       throw new HttpError(400, 'Experience letter / proof of experience is required since you selected "No" for Fresher.')
@@ -92,7 +92,7 @@ candidateRegistrationsRouter.post(
 
     const degreeDocument = files.degreeDocument?.[0]
     if (!degreeDocument) {
-      throw new HttpError(400, 'Degree / qualification document is required.')
+      throw new HttpError(400, 'Resume / CV document is required.')
     }
     if (body.isFresher === 'no' && !files.experienceDocument?.[0]) {
       throw new HttpError(400, 'Experience letter / proof of experience is required since you selected "No" for Fresher.')

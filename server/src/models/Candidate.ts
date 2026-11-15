@@ -13,6 +13,10 @@ const candidateSchema = new Schema(
     verified: { type: Boolean, default: true },
     photo: { type: String, default: '' },
     status: { type: String, enum: ['Active', 'Suspended'], default: 'Active' },
+    // Self-edited public extras (see routes/profileEdit.ts), synced from the
+    // owner's CandidateApplication by lib/publishing.ts.
+    about: { type: String, default: '' },
+    skills: { type: [String], default: [] },
   },
   { timestamps: true },
 )

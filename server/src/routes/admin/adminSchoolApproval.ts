@@ -7,11 +7,10 @@ import { requirePermission } from '../../lib/permissions.js'
 import { logAction } from '../../lib/audit.js'
 import { HttpError, NotFoundError } from '../../utils/HttpError.js'
 import { rejectSchoolSchema } from '../../validation/schoolApproval.js'
+import { schoolFieldsFrom } from '../../lib/publishing.js'
 
 export const adminSchoolApprovalRouter = Router()
 adminSchoolApprovalRouter.use(requireAdmin, requirePermission('reviewSubmissions'))
-
-const DEFAULT_SCHOOL_PHOTO = '/assets/images/School.jpg'
 
 // Reviewable states are 'Pending' (first submission) and 'Resubmitted' (an
 // edit after a prior Approved/Rejected decision) — 'Approved'/'Rejected'
@@ -24,20 +23,6 @@ async function loadReviewableRegistration(id: string) {
     throw new HttpError(400, `This registration was already ${registration.registrationStatus.toLowerCase()}.`)
   }
   return registration
-}
-
-function schoolFieldsFrom(registration: InstanceType<typeof SchoolRegistration>) {
-  return {
-    name: registration.schoolName,
-    city: registration.schoolCity,
-    area: registration.schoolArea,
-    curriculum: registration.schoolBoard || 'Not specified',
-    tag: registration.schoolType || registration.schoolBoard || 'Registered',
-    registered: true,
-    photo: registration.schoolLogoPath || DEFAULT_SCHOOL_PHOTO,
-    subjects: registration.schoolGrades || 'Not specified',
-    about: registration.schoolDesc || `${registration.schoolName} is a registered institution based in ${registration.schoolCity}.`,
-  }
 }
 
 adminSchoolApprovalRouter.post(

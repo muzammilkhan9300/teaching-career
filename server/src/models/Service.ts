@@ -13,6 +13,12 @@ const serviceSchema = new Schema(
     icon: { type: String, enum: SERVICE_ICON_KEYS, default: 'shield' },
     order: { type: Number, default: 0 },
     status: { type: String, enum: ['Draft', 'Published', 'Archived'], default: 'Published' },
+    // Homepage "New Services" tab — only published services with showAsNew
+    // appear there; the full Services page shows every published service.
+    // (Not named `isNew`: that's a reserved Mongoose document property.)
+    showAsNew: { type: Boolean, default: false },
+    image: { type: String, default: '' }, // thumbnail, /uploads/homepage/...
+    learnMoreUrl: { type: String, default: '' }, // internal path or https:// link; falls back to /services
   },
   { timestamps: true },
 )

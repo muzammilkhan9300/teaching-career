@@ -9,35 +9,14 @@ import { FormCard, FormSectionTitle } from '@/components/ui/FormCard'
 import { RequireLogin } from '@/components/auth/RequireLogin'
 import { ChoiceChip, ChoiceChipGroup, FileField, SelectField, TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
+import { Button } from '@/components/ui/Button'
 import { ApiError } from '@/lib/api'
 import { useMyCandidateApplication, useMyCandidateApplicationMutations } from '@/lib/queries'
 import { candidateRegistrationSchema, type CandidateRegistrationInput } from '@/lib/validation'
 import { AlertIcon, CapIcon, CheckCircleIcon, ClockIcon, InfoIcon, LockIcon, PersonIcon } from '@/components/icons'
 import type { MyCandidateApplication } from '@/types'
 
-const CITIES = ['Islamabad', 'Lahore', 'Karachi', 'Others']
-const QUALIFICATIONS = ["Bachelor's", "Master's", 'M.Phil', 'PhD']
-const SUBJECTS = [
-  { label: 'Mathematics', value: 'mathematics' },
-  { label: 'Physics', value: 'physics' },
-  { label: 'Chemistry', value: 'chemistry' },
-  { label: 'Biology', value: 'biology' },
-  { label: 'English', value: 'english' },
-  { label: 'Computer Science', value: 'computer_science' },
-  { label: 'Urdu', value: 'urdu' },
-  { label: 'Islamiat', value: 'islamiat' },
-  { label: 'Pakistan Studies', value: 'pakistan_studies' },
-  { label: 'Other', value: 'other' },
-]
-const CLASSES = [
-  { label: 'Primary', value: 'primary' },
-  { label: 'Middle', value: 'middle' },
-  { label: 'Matric', value: 'matric' },
-  { label: 'Intermediate', value: 'intermediate' },
-  { label: 'O Level', value: 'o_level' },
-  { label: 'A Level', value: 'a_level' },
-  { label: 'Other', value: 'other' },
-]
+import { CANDIDATE_CITIES as CITIES, CLASSES, QUALIFICATIONS, SUBJECTS } from '@/lib/candidateOptions'
 
 const STATUS_COPY: Record<MyCandidateApplication['applicationStatus'], { icon: typeof PersonIcon; classes: string; title: string; text: string }> = {
   New: {
@@ -212,6 +191,14 @@ export default function CandidateRegistration() {
                     {myApplication.rejectionReason}
                   </p>
                 ) : null}
+                {myApplication.applicationStatus === 'Verified' && myApplication.publishedCandidateId ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Button to="/profile/candidate/edit" className="px-4 py-2 text-xs">
+                      Edit Profile
+                    </Button>
+                    <span className="text-xs">Quick edits go live right away — no documents or re-review needed.</span>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
@@ -262,10 +249,14 @@ export default function CandidateRegistration() {
                   <TextField label="Completion Year" placeholder="e.g. 2022" {...register('completionYear')} />
                   <FileField
                     id="degreeDocument"
-                    label="Degree / Qualification Document"
+                    label="Resume / CV"
                     required
-                    hint={myApplication ? 'Your previous document was removed after review — please re-upload it. PDF, JPG, PNG (Max 5MB)' : 'PDF, JPG, PNG (Max 5MB)'}
-                    accept=".pdf,image/png,image/jpeg"
+                    hint={
+                      myApplication
+                        ? 'Your previous document was removed after review — please re-upload it. PDF, Word, JPG, PNG (Max 5MB)'
+                        : 'PDF, Word (DOC/DOCX), JPG, PNG (Max 5MB)'
+                    }
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg"
                     fileName={degreeDocument?.[0]?.name}
                     error={errors.degreeDocument?.message as string | undefined}
                     {...register('degreeDocument')}
