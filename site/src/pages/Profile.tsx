@@ -11,6 +11,7 @@ import { PersonIcon, LogOutIcon, ShieldIcon, BriefcaseIcon } from '@/components/
 import { useUserAuth } from '@/auth/UserAuthContext'
 import { useMyCandidateApplication, useMySchoolRegistration, useMyVacancies } from '@/lib/queries'
 import { EditIcon } from '@/components/icons/admin'
+import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
 import type { MyCandidateApplication, MySchoolRegistration } from '@/types'
 
 type Tone = 'live' | 'review' | 'changes' | 'none'
@@ -189,12 +190,8 @@ export default function Profile() {
         <div className="tc-container flex justify-center">
           <div className="w-full max-w-xl rounded-3xl border border-line bg-white p-6 shadow-tc sm:p-8">
             <div className="mb-6 flex items-center gap-4">
-              <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-mint text-teal-deep">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
-                ) : (
-                  <PersonIcon size={28} />
-                )}
+              <span className="block h-16 w-16 shrink-0 overflow-hidden rounded-full bg-mint">
+                <CandidatePhoto src={user.avatarUrl} alt={user.name} iconSize={28} />
               </span>
               <div>
                 <p className="text-lg font-extrabold text-navy">{user.name}</p>

@@ -32,6 +32,8 @@ export interface FieldConfig {
   upload?: { endpoint: string; field: string }
   /** 'image' fields only: maps the stored value to a displayable URL (e.g. legacy candidate photo names). */
   preview?: (value: string) => string
+  /** 'image' fields only: CSS object-position for the preview crop (e.g. keep faces in frame). */
+  previewPosition?: string
 }
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -112,7 +114,7 @@ function ImageField({
         {uploading ? (
           <SpinnerIcon size={18} className="animate-spin text-teal" />
         ) : value ? (
-          <img src={field.preview ? field.preview(value) : value} alt="Selected image preview" className="h-full w-full object-cover" />
+          <img src={field.preview ? field.preview(value) : value} alt="Selected image preview" className="h-full w-full object-cover" style={{ objectPosition: field.previewPosition }} />
         ) : (
           'No image'
         )}

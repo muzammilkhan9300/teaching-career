@@ -15,6 +15,8 @@ import { useMyCandidateApplication, useMyCandidateApplicationMutations } from '@
 import { candidateRegistrationSchema, type CandidateRegistrationInput } from '@/lib/validation'
 import { AlertIcon, CapIcon, CheckCircleIcon, ClockIcon, InfoIcon, LockIcon, PersonIcon } from '@/components/icons'
 import type { MyCandidateApplication } from '@/types'
+import { usePreviewUrl } from '@/lib/usePreviewUrl'
+import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
 
 import { CANDIDATE_CITIES as CITIES, CLASSES, QUALIFICATIONS, SUBJECTS } from '@/lib/candidateOptions'
 
@@ -123,6 +125,7 @@ export default function CandidateRegistration() {
   const subjects = watch('subjects') ?? []
   const classes = watch('classes') ?? []
   const profilePhoto = watch('profilePhoto')
+  const photoPreviewUrl = usePreviewUrl(profilePhoto?.[0])
   const degreeDocument = watch('degreeDocument')
   const experienceDocument = watch('experienceDocument')
   const policeVerification = watch('policeVerification')
@@ -213,14 +216,19 @@ export default function CandidateRegistration() {
                   <p className="mt-1 text-sm text-body">Please fill in the details below so we can review your profile.</p>
                   <p className="text-sm text-body">Profile photo is optional — a passport-size, professional-looking photo is preferred.</p>
                 </div>
-                <FileField
-                  id="profilePhoto"
-                  placeholder="Upload Image"
-                  accept="image/png, image/jpeg"
-                  fileName={profilePhoto?.[0]?.name}
-                  error={errors.profilePhoto?.message as string | undefined}
-                  {...register('profilePhoto')}
-                />
+                <div className="flex items-center gap-4">
+                  <span className="block h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-mint">
+                    <CandidatePhoto src={photoPreviewUrl || myApplication?.profilePhotoPath} alt="Profile photo preview" iconSize={36} />
+                  </span>
+                  <FileField
+                    id="profilePhoto"
+                    placeholder="Upload Image"
+                    accept="image/png, image/jpeg"
+                    fileName={profilePhoto?.[0]?.name}
+                    error={errors.profilePhoto?.message as string | undefined}
+                    {...register('profilePhoto')}
+                  />
+                </div>
               </div>
 
               <div className="flex flex-col gap-5">

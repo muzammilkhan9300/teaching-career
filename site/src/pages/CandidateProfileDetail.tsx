@@ -6,8 +6,8 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { FormCard } from '@/components/ui/FormCard'
 import { Button } from '@/components/ui/Button'
 import { useCandidate, useMyCandidateApplication } from '@/lib/queries'
-import { getCandidatePhoto } from '@/lib/candidatePhoto'
-import { CapIcon, CheckCircleIcon, ChevronRightIcon, ClockIcon, LockIcon, PersonIcon, PinIcon, ShieldIcon } from '@/components/icons'
+import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
+import { CapIcon, CheckCircleIcon, ChevronRightIcon, ClockIcon, LockIcon, PinIcon, ShieldIcon } from '@/components/icons'
 import { EditIcon } from '@/components/icons/admin'
 import { ApiError } from '@/lib/api'
 import { useUserAuth } from '@/auth/UserAuthContext'
@@ -121,13 +121,7 @@ export default function CandidateProfileDetail() {
           <FormCard>
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
               <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-mint">
-                {candidate.photo ? (
-                  <img src={getCandidatePhoto(candidate.photo)} alt={candidate.name} className="h-full w-full object-cover object-top" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-teal-deep">
-                    <PersonIcon size={40} />
-                  </div>
-                )}
+                <CandidatePhoto src={candidate.photo} alt={candidate.name} iconSize={40} />
               </div>
               <div className="flex flex-col items-center gap-2 sm:items-start">
                 <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">

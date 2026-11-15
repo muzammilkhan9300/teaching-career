@@ -13,7 +13,7 @@ import { ApiError } from '@/lib/api'
 import { EditIcon, PlusIcon, SpinnerIcon, TrashIcon } from '@/components/icons/admin'
 import type { Candidate } from '@/types'
 import { getCandidatePhoto } from '@/lib/candidatePhoto'
-import { PersonIcon } from '@/components/icons'
+import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
 
 const FIELDS: FieldConfig[] = [
   { name: 'name', label: 'Full Name', type: 'text', required: true },
@@ -29,6 +29,7 @@ const FIELDS: FieldConfig[] = [
     type: 'image',
     upload: { endpoint: '/admin/uploads/candidate-photo', field: 'profilePhoto' },
     preview: getCandidatePhoto,
+    previewPosition: '50% 25%',
     hint: 'Shown on the candidate’s public profile and in profile listings.',
   },
   { name: 'verified', label: 'Verified', type: 'checkbox' },
@@ -49,8 +50,8 @@ export default function AdminCandidates() {
       key: 'photo',
       label: 'Photo',
       render: (c) => (
-        <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-mint text-teal-deep">
-          {c.photo ? <img src={getCandidatePhoto(c.photo)} alt="" className="h-full w-full object-cover object-top" /> : <PersonIcon size={18} />}
+        <span className="block h-10 w-10 shrink-0 overflow-hidden rounded-full bg-mint">
+          <CandidatePhoto src={c.photo} alt={`${c.name} — photo`} iconSize={18} lazy />
         </span>
       ),
     },

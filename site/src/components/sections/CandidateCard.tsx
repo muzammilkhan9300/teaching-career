@@ -1,25 +1,13 @@
 import { Link } from 'react-router-dom'
 import { CapIcon, CheckCircleIcon, ClockIcon, PersonIcon, PinIcon } from '@/components/icons'
 import type { Candidate } from '@/types'
-import { getCandidatePhoto } from '@/lib/candidatePhoto'
+import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
 
 export function CandidateCard({ candidate }: { candidate: Candidate }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-tc transition hover:-translate-y-1 hover:shadow-tc-lg">
-      <div className="relative h-48 w-full bg-mint">
-        {candidate.photo ? (
-          <img
-            src={getCandidatePhoto(candidate.photo)}
-            alt={candidate.name}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-teal-deep" role="img" aria-label={`${candidate.name} — profile photo`}>
-            <PersonIcon size={48} />
-          </div>
-        )}
+      <div className="relative h-48 w-full overflow-hidden bg-mint">
+        <CandidatePhoto src={candidate.photo} alt={`${candidate.name} — profile photo`} iconSize={48} lazy />
         {candidate.verified ? (
           <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-teal-deep shadow-tc">
             <CheckCircleIcon size={13} />

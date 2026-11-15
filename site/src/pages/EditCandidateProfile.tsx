@@ -10,13 +10,14 @@ import { RequireLogin } from '@/components/auth/RequireLogin'
 import { Button } from '@/components/ui/Button'
 import { ChoiceChip, ChoiceChipGroup, FileField, SelectField, TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
-import { CheckCircleIcon, LockIcon, PersonIcon, ShieldIcon } from '@/components/icons'
+import { CheckCircleIcon, LockIcon, ShieldIcon } from '@/components/icons'
 import { useUserAuth } from '@/auth/UserAuthContext'
 import { useAdminCandidateApplication, useAdminUpdateCandidateProfile, useMyCandidateApplication, useUpdateCandidateProfile } from '@/lib/queries'
 import { CANDIDATE_CITIES, CLASSES, QUALIFICATIONS, SUBJECTS } from '@/lib/candidateOptions'
 import { serverErrors } from '@/lib/formErrors'
 import { formatShortDate } from '@/lib/dates'
 import { usePreviewUrl } from '@/lib/usePreviewUrl'
+import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
 import { ApiError } from '@/lib/api'
 import type { MyCandidateApplication } from '@/types'
 
@@ -198,8 +199,8 @@ function EditForm({ app, adminMode = false }: { app: MyCandidateApplication; adm
       <div className="flex flex-col gap-5">
         <FormSectionTitle>Public Profile</FormSectionTitle>
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-          <span className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-mint text-teal-deep">
-            {photoPreview ? <img src={photoPreview} alt="Profile preview" className="h-full w-full object-cover object-top" /> : <PersonIcon size={36} />}
+          <span className="block h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-mint">
+            <CandidatePhoto src={photoPreview} alt="Profile preview" iconSize={36} />
           </span>
           <div className="flex flex-col gap-2">
             <FileField
