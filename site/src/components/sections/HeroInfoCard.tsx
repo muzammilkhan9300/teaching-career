@@ -206,7 +206,9 @@ function ServicesPanel({ content }: { content: HomepageContent }) {
           image={service.image || (video ? youTubeThumbnailUrl(video.youtubeId) : '')}
           fallbackIcon={SparklesIcon}
           title={service.title}
-          badge
+          // Only services the admin flagged as new get the badge (the API
+          // falls back to a regular published service when none are flagged).
+          badge={service.showAsNew}
           description={service.description}
           // The featured video from the TeachingCareer YouTube channel (Admin →
           // YouTube Videos) plays from a play button centred on the image.

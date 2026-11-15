@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
@@ -16,6 +17,7 @@ import { CANDIDATE_CITIES, CLASSES, QUALIFICATIONS, SUBJECTS } from '@/lib/candi
 import { serverErrors } from '@/lib/formErrors'
 import { formatShortDate } from '@/lib/dates'
 import { usePreviewUrl } from '@/lib/usePreviewUrl'
+import { ApiError } from '@/lib/api'
 import type { MyCandidateApplication } from '@/types'
 
 interface FormValues {
@@ -113,6 +115,7 @@ function EditForm({ app }: { app: MyCandidateApplication }) {
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { user } = useUserAuth()
+  const queryClient = useQueryClient()
   const updateProfile = useUpdateCandidateProfile()
   const [formError, setFormError] = useState<string | null>(null)
   const [removePhoto, setRemovePhoto] = useState(false)
@@ -149,6 +152,12 @@ function EditForm({ app }: { app: MyCandidateApplication }) {
         navigate(publicUrl)
       },
       onError: (err) => {
+        if (err instanceof ApiError && err.status === 401) {
+          // Session expired mid-edit: log in again, then come straight back to this form.
+          void queryClient.resetQueries({ queryKey: ['user', 'me'] })
+          navigate('/login', { state: { from: `${publicUrl}?edit=1`, sessionExpired: true } })
+          return
+        }
         const { fields, message } = serverErrors(err)
         for (const [name, msg] of Object.entries(fields)) setError(name as keyof FormValues, { message: msg })
         setFormError(message)
@@ -285,7 +294,11 @@ function EditForm({ app }: { app: MyCandidateApplication }) {
 }
 
 function EditCandidateProfileContent() {
-  const { data: app, isPending } = useMyCandidateApplication()
+  const { data: app, isPending, error } = useMyCandidateApplication()
+
+  if (error instanceof ApiError && error.status === 401) {
+    return <Navigate to="/login" replace state={{ from: '/profile/candidate/edit', sessionExpired: true }} />
+  }
 
   if (isPending) {
     return (

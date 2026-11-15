@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from './api'
+import { api, ApiError } from './api'
 import { useUserAuth } from '@/auth/UserAuthContext'
 import type {
   BlogPost,
@@ -173,6 +173,9 @@ export function useMyCandidateApplication() {
   return useQuery({
     queryKey: ['candidate-applications', 'mine', user?.id],
     enabled: Boolean(user),
+    // A 401 means the session expired — retrying won't fix it, and the pages
+    // reading this query send the visitor to log in again right away.
+    retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 3,
     // Server returns 200 + null when there's no application yet — that's a
     // normal state for this query, not an error, so no 404 to catch here.
     queryFn: () => api.get<MyCandidateApplication | null>('/candidate-registrations/mine'),

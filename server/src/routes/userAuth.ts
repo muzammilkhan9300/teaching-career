@@ -148,8 +148,24 @@ userAuthRouter.get('/google/status', (_req, res) => {
   res.json({ configured: googleConfigured() })
 })
 
-userAuthRouter.get('/google', (_req, res) => {
+// Where to land after Google Sign-In (e.g. back on the profile the visitor
+// clicked "Edit Profile" on). Only same-site paths are accepted — a single
+// leading "/" and no "//" or "\" — so this can never become an open redirect.
+const GOOGLE_RETURN_COOKIE = 'tc_google_return'
+const googleReturnCookieOptions = { httpOnly: true, sameSite: 'lax' as const, secure: env.isProduction, maxAge: 10 * 60 * 1000, path: '/' }
+
+function safeReturnPath(value: unknown): string | undefined {
+  if (typeof value !== 'string' || value.length > 500) return undefined
+  if (!value.startsWith('/') || value.startsWith('//') || value.includes('\\')) return undefined
+  return value
+}
+
+userAuthRouter.get('/google', (req, res) => {
   if (!googleConfigured()) throw new HttpError(503, 'Google Sign-In is not configured.')
+
+  const returnTo = safeReturnPath(req.query.returnTo)
+  if (returnTo) res.cookie(GOOGLE_RETURN_COOKIE, returnTo, googleReturnCookieOptions)
+  else res.clearCookie(GOOGLE_RETURN_COOKIE, { path: '/' })
 
   const params = new URLSearchParams({
     client_id: env.googleClientId!,
@@ -234,6 +250,8 @@ userAuthRouter.get(
 
     const token = signUserToken({ sub: user.id, email: user.email })
     res.cookie(USER_COOKIE_NAME, token, userCookieOptions)
-    res.redirect(env.clientOrigin)
+    const returnTo = safeReturnPath(req.cookies?.[GOOGLE_RETURN_COOKIE]) ?? ''
+    res.clearCookie(GOOGLE_RETURN_COOKIE, { path: '/' })
+    res.redirect(`${env.clientOrigin}${returnTo}`)
   }),
 )

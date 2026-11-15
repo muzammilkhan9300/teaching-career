@@ -12,6 +12,7 @@ import { GoogleIcon, MailIcon, ChevronRightIcon } from '@/components/icons'
 interface AuthLocationState {
   from?: string
   backgroundLocation?: Location
+  sessionExpired?: boolean
 }
 
 /**
@@ -48,14 +49,16 @@ export function LoginFormCard() {
     formState: { errors },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) })
 
+  // A visitor bounced here by AdminRoute or the Edit Profile button gets
+  // returned to the page they originally wanted; opened as a modal over some
+  // page, closes back onto that same page; otherwise home.
+  const from = state?.from ?? state?.backgroundLocation?.pathname ?? '/'
+  const googleHref = from !== '/' ? `/api/auth/google?returnTo=${encodeURIComponent(from)}` : '/api/auth/google'
+
   async function onSubmit(data: LoginInput) {
     setFormError(null)
     try {
       await login(data)
-      // A visitor bounced here by AdminRoute (not authenticated at all) gets
-      // returned to the admin page they originally wanted; opened as a modal
-      // over some page, closes back onto that same page; otherwise home.
-      const from = state?.from ?? state?.backgroundLocation?.pathname ?? '/'
       navigate(from, { replace: true })
     } catch {
       setFormError('Invalid email or password.')
@@ -64,6 +67,11 @@ export function LoginFormCard() {
 
   return (
     <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 shadow-tc">
+      {state?.sessionExpired ? (
+        <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+          Your session has expired. Please log in again to continue.
+        </p>
+      ) : null}
       {suspendedError ? (
         <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
           This account has been suspended.
@@ -78,7 +86,7 @@ export function LoginFormCard() {
       {showChooser ? (
         <div className="flex flex-col gap-3">
           <a
-            href="/api/auth/google"
+            href={googleHref}
             className="flex items-center justify-center gap-3 rounded-full border border-line px-6 py-3.5 text-sm font-semibold text-navy transition hover:bg-mint/40"
           >
             <GoogleIcon size={18} />

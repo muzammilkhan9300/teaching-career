@@ -10,11 +10,14 @@ import { CapIcon, PinIcon } from '@/components/icons'
 import { useHomepageContent } from '@/lib/queries'
 import { useSlideshow } from '@/lib/useSlideshow'
 
-// Shown only until the admin-managed slides load, or if none are active —
-// so the hero never renders as a blank block. Slides themselves are managed
-// under Admin → Homepage → Hero Slider.
+// Shown until the admin-managed slides load, or if none are active — so the
+// hero is never blank and still slides. These are the original three hero
+// images; once any slide is active under Admin → Homepage → Hero Slider,
+// those slides replace this list entirely.
 const FALLBACK_SLIDES: HeroSlideView[] = [
   { image: '/assets/images/hero-annual-function.jpg', alt: 'School annual function', position: '12% 50%' },
+  { image: '/assets/images/hero-group-study.jpg', alt: 'Teachers planning together', position: '50% 60%' },
+  { image: '/assets/images/hero-graduation.jpg', alt: 'Graduates celebrating', position: '50% 50%' },
 ]
 
 export default function Home() {
