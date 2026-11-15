@@ -8,9 +8,9 @@ import { logAction } from '../../lib/audit.js'
 import { HttpError, NotFoundError } from '../../utils/HttpError.js'
 import { deleteUploadedFile } from '../../lib/files.js'
 
-/** Only files this app uploaded for homepage content are ever cleaned up — never bundled /assets images. */
-function deleteHomepageImage(path: unknown) {
-  if (typeof path === 'string' && path.startsWith('/uploads/homepage/')) deleteUploadedFile(path)
+/** Only files this app uploaded into `dir` are ever cleaned up — never bundled /assets images or external URLs. */
+function deleteUploadedImage(path: unknown, dir: string) {
+  if (typeof path === 'string' && path.startsWith(`/uploads/${dir}/`)) deleteUploadedFile(path)
 }
 
 interface CrudRouterOptions {
@@ -31,6 +31,12 @@ interface CrudRouterOptions {
    * deleted, so replaced images don't pile up on disk.
    */
   imageFields?: string[]
+  /** uploads/ subfolder the imageFields' files live in. Default: "homepage". */
+  imageDir?: string
+  /** Keep image files when the record is deleted (another record may still reference them). */
+  keepImagesOnDelete?: boolean
+  /** Runs after a successful update, before replaced images are deleted. */
+  afterUpdate?: (doc: any, previous: Record<string, unknown> | null) => Promise<void>
 }
 
 /**
@@ -69,11 +75,13 @@ export function createAdminCrudRouter(model: Model<any>, schema: ZodType<any>, o
     requirePermission('manageContent'),
     asyncHandler(async (req, res) => {
       const data = schema.parse(req.body)
-      const previous = options.imageFields?.length ? await model.findById(req.params.id).lean<Record<string, unknown>>() : null
+      const needsPrevious = Boolean(options.imageFields?.length || options.afterUpdate)
+      const previous = needsPrevious ? await model.findById(req.params.id).lean<Record<string, unknown>>() : null
       const doc = await model.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true })
       if (!doc) throw new NotFoundError()
+      if (options.afterUpdate) await options.afterUpdate(doc, previous)
       for (const field of options.imageFields ?? []) {
-        if (previous && previous[field] !== doc.get(field)) deleteHomepageImage(previous[field])
+        if (previous && previous[field] !== doc.get(field)) deleteUploadedImage(previous[field], options.imageDir ?? 'homepage')
       }
       logAction(req, 'update', options.resourceName, doc.id)
       res.json(doc)
@@ -106,7 +114,9 @@ export function createAdminCrudRouter(model: Model<any>, schema: ZodType<any>, o
     asyncHandler(async (req, res) => {
       const doc = await model.findByIdAndDelete(req.params.id)
       if (!doc) throw new NotFoundError()
-      for (const field of options.imageFields ?? []) deleteHomepageImage(doc.get(field))
+      if (!options.keepImagesOnDelete) {
+        for (const field of options.imageFields ?? []) deleteUploadedImage(doc.get(field), options.imageDir ?? 'homepage')
+      }
       logAction(req, 'delete', options.resourceName, req.params.id)
       res.status(204).end()
     }),

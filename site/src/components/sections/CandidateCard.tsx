@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { CapIcon, CheckCircleIcon, ClockIcon, PersonIcon, PinIcon } from '@/components/icons'
 import type { Candidate } from '@/types'
+import { getCandidatePhoto } from '@/lib/candidatePhoto'
 
 export function CandidateCard({ candidate }: { candidate: Candidate }) {
   return (
@@ -8,7 +9,7 @@ export function CandidateCard({ candidate }: { candidate: Candidate }) {
       <div className="relative h-48 w-full bg-mint">
         {candidate.photo ? (
           <img
-            src={candidate.photo}
+            src={getCandidatePhoto(candidate.photo)}
             alt={candidate.name}
             loading="lazy"
             decoding="async"

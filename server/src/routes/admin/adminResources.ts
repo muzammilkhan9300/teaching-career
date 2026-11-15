@@ -1,6 +1,7 @@
 import { Vacancy } from '../../models/Vacancy.js'
 import { School } from '../../models/School.js'
 import { Candidate } from '../../models/Candidate.js'
+import { CandidateApplication } from '../../models/CandidateApplication.js'
 import { BlogPost } from '../../models/BlogPost.js'
 import { Service } from '../../models/Service.js'
 import {
@@ -42,6 +43,20 @@ export const adminSchoolsRouter = createAdminCrudRouter(School, schoolInputSchem
 
 export const adminCandidatesRouter = createAdminCrudRouter(Candidate, candidateInputSchema, {
   resourceName: 'Candidate',
+  // Photos uploaded from the admin form (POST /admin/uploads/candidate-photo)
+  // live in uploads/photos, the same folder as candidates' own uploads. A
+  // replaced photo is deleted; on record deletion it's kept, because the
+  // candidate's registration may still reference it.
+  imageFields: ['photo'],
+  imageDir: 'photos',
+  keepImagesOnDelete: true,
+  // Keep the candidate's registration in step, so their own Edit Profile shows
+  // the admin's photo and a later self-edit doesn't silently revert it.
+  afterUpdate: async (doc, previous) => {
+    if (previous && previous.photo !== doc.photo) {
+      await CandidateApplication.updateOne({ publishedCandidateId: doc._id }, doc.photo ? { profilePhotoPath: doc.photo } : { $unset: { profilePhotoPath: 1 } })
+    }
+  },
   statusActions: {
     suspend: (doc) => (doc.status = 'Suspended'),
     restore: (doc) => (doc.status = 'Active'),

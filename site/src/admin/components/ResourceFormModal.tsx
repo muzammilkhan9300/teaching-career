@@ -28,7 +28,15 @@ export interface FieldConfig {
   placeholder?: string
   /** Small helper text under the field. */
   hint?: string
+  /** 'image' fields only: where the picked file is uploaded. Default: homepage images. */
+  upload?: { endpoint: string; field: string }
+  /** 'image' fields only: maps the stored value to a displayable URL (e.g. legacy candidate photo names). */
+  preview?: (value: string) => string
 }
+
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const IMAGE_EXTS = /\.(jpe?g|png|webp)$/i
+const MAX_IMAGE_MB = 5
 
 interface ResourceFormModalProps {
   title: string
@@ -74,16 +82,21 @@ function ImageField({
   async function handleFile(file: File | undefined) {
     if (!file) return
     setError(null)
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image is too large. Max 5MB.')
+    if (!IMAGE_TYPES.includes(file.type) || !IMAGE_EXTS.test(file.name)) {
+      setError('Unsupported file type. Please choose a JPG, JPEG, PNG or WEBP image.')
+      return
+    }
+    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+      setError(`Image is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). The maximum size is ${MAX_IMAGE_MB}MB.`)
       return
     }
     setUploading(true)
     onUploadingChange(true)
     try {
       const form = new FormData()
-      form.set('homepageImage', file)
-      const { url } = await api.postForm<{ url: string }>('/admin/uploads/image', form)
+      const target = field.upload ?? { endpoint: '/admin/uploads/image', field: 'homepageImage' }
+      form.set(target.field, file)
+      const { url } = await api.postForm<{ url: string }>(target.endpoint, form)
       onChange(url)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Upload failed. Please try again.')
@@ -99,7 +112,7 @@ function ImageField({
         {uploading ? (
           <SpinnerIcon size={18} className="animate-spin text-teal" />
         ) : value ? (
-          <img src={value} alt="" className="h-full w-full object-cover" />
+          <img src={field.preview ? field.preview(value) : value} alt="Selected image preview" className="h-full w-full object-cover" />
         ) : (
           'No image'
         )}
@@ -110,7 +123,7 @@ function ImageField({
           <input
             id={`field-${field.name}`}
             type="file"
-            accept="image/png,image/jpeg,image/webp"
+            accept=".jpg,.jpeg,.png,.webp,image/png,image/jpeg,image/webp"
             className="sr-only"
             disabled={uploading}
             onChange={(e) => {
@@ -124,7 +137,7 @@ function ImageField({
             <TrashIcon size={12} /> Remove image
           </button>
         ) : null}
-        <span className="text-xs text-body">JPG, PNG or WEBP, max 5MB.</span>
+        <span className="text-xs text-body">JPG, JPEG, PNG or WEBP, max {MAX_IMAGE_MB}MB.</span>
         {error ? <span className="text-xs font-medium text-red-600">{error}</span> : null}
       </div>
     </div>

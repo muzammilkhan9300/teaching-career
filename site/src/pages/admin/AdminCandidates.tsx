@@ -12,6 +12,8 @@ import { useToast } from '@/components/ui/Toast'
 import { ApiError } from '@/lib/api'
 import { EditIcon, PlusIcon, SpinnerIcon, TrashIcon } from '@/components/icons/admin'
 import type { Candidate } from '@/types'
+import { getCandidatePhoto } from '@/lib/candidatePhoto'
+import { PersonIcon } from '@/components/icons'
 
 const FIELDS: FieldConfig[] = [
   { name: 'name', label: 'Full Name', type: 'text', required: true },
@@ -21,7 +23,14 @@ const FIELDS: FieldConfig[] = [
   { name: 'qualification', label: 'Qualification', type: 'text', required: true },
   { name: 'experience', label: 'Experience', type: 'text', required: true },
   { name: 'tags', label: 'Tags (comma separated)', type: 'tags', placeholder: 'School Teaching, O Level' },
-  { name: 'photo', label: 'Photo URL', type: 'text', placeholder: '/assets/images/candidate-...jpg' },
+  {
+    name: 'photo',
+    label: 'Profile Image',
+    type: 'image',
+    upload: { endpoint: '/admin/uploads/candidate-photo', field: 'profilePhoto' },
+    preview: getCandidatePhoto,
+    hint: 'Shown on the candidate’s public profile and in profile listings.',
+  },
   { name: 'verified', label: 'Verified', type: 'checkbox' },
 ]
 
@@ -36,6 +45,15 @@ export default function AdminCandidates() {
   const controls = useTableControls(candidates ?? [], { searchKeys: ['name', 'role', 'city'], defaultSortKey: 'createdAt' as never })
 
   const columns: Column<Candidate>[] = [
+    {
+      key: 'photo',
+      label: 'Photo',
+      render: (c) => (
+        <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-mint text-teal-deep">
+          {c.photo ? <img src={getCandidatePhoto(c.photo)} alt="" className="h-full w-full object-cover object-top" /> : <PersonIcon size={18} />}
+        </span>
+      ),
+    },
     { key: 'name', label: 'Name', sortable: true },
     { key: 'role', label: 'Role', sortable: true },
     { key: 'city', label: 'City', sortable: true },

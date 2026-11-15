@@ -3,6 +3,7 @@ import { MulterError } from 'multer'
 import mongoose from 'mongoose'
 import { ZodError } from 'zod'
 import { HttpError } from '../utils/HttpError.js'
+import { env } from '../config/env.js'
 
 export function notFoundHandler(req: Request, res: Response) {
   res.status(404).json({ message: `No route for ${req.method} ${req.originalUrl}` })
@@ -30,7 +31,8 @@ export function errorHandler(err: unknown, _req: Request, res: Response, _next: 
   }
 
   if (err instanceof MulterError) {
-    res.status(400).json({ message: err.message })
+    const message = err.code === 'LIMIT_FILE_SIZE' ? `File is too large. The maximum size is ${env.maxUploadMb}MB.` : err.message
+    res.status(400).json({ message })
     return
   }
 
