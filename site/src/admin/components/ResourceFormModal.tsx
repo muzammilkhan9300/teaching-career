@@ -3,6 +3,7 @@ import { CloseIcon } from '@/components/icons'
 import { SpinnerIcon, TrashIcon } from '@/components/icons/admin'
 import { api, ApiError } from '@/lib/api'
 import { parseYouTubeId, youTubeThumbnailUrl } from '@/lib/youtube'
+import { PHOTO_ACCEPT, PhotoCropper, checkPhotoFile } from '@/components/ui/PhotoCropper'
 
 export type FieldType =
   | 'text'
@@ -34,6 +35,8 @@ export interface FieldConfig {
   preview?: (value: string) => string
   /** 'image' fields only: CSS object-position for the preview crop (e.g. keep faces in frame). */
   previewPosition?: string
+  /** 'image' fields only: open the passport-style crop editor before uploading (candidate photos). */
+  crop?: 'portrait'
 }
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -80,10 +83,19 @@ function ImageField({
 }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [cropping, setCropping] = useState<File | null>(null)
+  const portrait = field.crop === 'portrait'
 
-  async function handleFile(file: File | undefined) {
+  function handleFile(file: File | undefined) {
     if (!file) return
     setError(null)
+    if (portrait) {
+      // Any reasonable photo can be opened; what's uploaded is the small cropped version.
+      const problem = checkPhotoFile(file)
+      if (problem) setError(problem)
+      else setCropping(file)
+      return
+    }
     if (!IMAGE_TYPES.includes(file.type) || !IMAGE_EXTS.test(file.name)) {
       setError('Unsupported file type. Please choose a JPG, JPEG, PNG or WEBP image.')
       return
@@ -92,6 +104,10 @@ function ImageField({
       setError(`Image is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). The maximum size is ${MAX_IMAGE_MB}MB.`)
       return
     }
+    void upload(file)
+  }
+
+  async function upload(file: File) {
     setUploading(true)
     onUploadingChange(true)
     try {
@@ -110,7 +126,15 @@ function ImageField({
 
   return (
     <div className="flex items-center gap-4 rounded-xl border border-dashed border-line p-3">
-      <span className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-mint text-xs text-body">
+      <PhotoCropper
+        file={cropping}
+        onCancel={() => setCropping(null)}
+        onConfirm={(cropped) => {
+          setCropping(null)
+          void upload(cropped)
+        }}
+      />
+      <span className={`flex ${portrait ? 'h-24 w-[72px]' : 'h-20 w-28'} shrink-0 items-center justify-center overflow-hidden rounded-lg bg-mint text-xs text-body`}>
         {uploading ? (
           <SpinnerIcon size={18} className="animate-spin text-teal" />
         ) : value ? (
@@ -125,11 +149,11 @@ function ImageField({
           <input
             id={`field-${field.name}`}
             type="file"
-            accept=".jpg,.jpeg,.png,.webp,image/png,image/jpeg,image/webp"
+            accept={PHOTO_ACCEPT}
             className="sr-only"
             disabled={uploading}
             onChange={(e) => {
-              void handleFile(e.target.files?.[0])
+              handleFile(e.target.files?.[0])
               e.target.value = ''
             }}
           />
@@ -139,7 +163,9 @@ function ImageField({
             <TrashIcon size={12} /> Remove image
           </button>
         ) : null}
-        <span className="text-xs text-body">JPG, JPEG, PNG or WEBP, max {MAX_IMAGE_MB}MB.</span>
+        <span className="text-xs text-body">
+          {portrait ? 'JPG, JPEG, PNG or WEBP. You can crop and position it before saving.' : `JPG, JPEG, PNG or WEBP, max ${MAX_IMAGE_MB}MB.`}
+        </span>
         {error ? <span className="text-xs font-medium text-red-600">{error}</span> : null}
       </div>
     </div>

@@ -30,6 +30,7 @@ const FIELDS: FieldConfig[] = [
     upload: { endpoint: '/admin/uploads/candidate-photo', field: 'profilePhoto' },
     preview: getCandidatePhoto,
     previewPosition: '50% 25%',
+    crop: 'portrait',
     hint: 'Shown on the candidate’s public profile and in profile listings.',
   },
   { name: 'verified', label: 'Verified', type: 'checkbox' },

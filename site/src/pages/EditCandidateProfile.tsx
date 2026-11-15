@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
@@ -17,6 +17,7 @@ import { CANDIDATE_CITIES, CLASSES, QUALIFICATIONS, SUBJECTS } from '@/lib/candi
 import { serverErrors } from '@/lib/formErrors'
 import { formatShortDate } from '@/lib/dates'
 import { usePreviewUrl } from '@/lib/usePreviewUrl'
+import { PHOTO_ACCEPT, PhotoCropper, checkPhotoFile, fileListOf } from '@/components/ui/PhotoCropper'
 import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
 import { ApiError } from '@/lib/api'
 import type { MyCandidateApplication } from '@/types'
@@ -132,12 +133,16 @@ function EditForm({ app, adminMode = false }: { app: MyCandidateApplication; adm
   const updateProfile = adminMode ? adminUpdate : ownerUpdate
   const [formError, setFormError] = useState<string | null>(null)
   const [removePhoto, setRemovePhoto] = useState(false)
+  const [cropping, setCropping] = useState<File | null>(null)
+  const [photoOriginal, setPhotoOriginal] = useState<File | null>(null)
 
   const {
     register,
     handleSubmit,
     watch,
     setError,
+    setValue,
+    clearErrors,
     formState: { errors },
   } = useForm<FormValues>({ defaultValues: defaultsFrom(app) })
 
@@ -148,6 +153,22 @@ function EditForm({ app, adminMode = false }: { app: MyCandidateApplication; adm
   const newPhotoUrl = usePreviewUrl(newPhoto)
   const photoPreview = newPhoto ? newPhotoUrl : removePhoto ? '' : app.profilePhotoPath ?? ''
   const publicUrl = `/candidate-profiles/${app.publishedCandidateId}`
+  // The picked file opens the crop editor; only the cropped result goes into the form.
+  const photoRegistration = register('profilePhoto')
+  const photoInput = {
+    ...photoRegistration,
+    onChange: async (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (!file) return
+      const problem = checkPhotoFile(file)
+      if (problem) setError('profilePhoto', { message: problem })
+      else {
+        setPhotoOriginal(file)
+        setCropping(file)
+      }
+    },
+  }
 
   function onSubmit(values: FormValues) {
     setFormError(null)
@@ -199,20 +220,36 @@ function EditForm({ app, adminMode = false }: { app: MyCandidateApplication; adm
       <div className="flex flex-col gap-5">
         <FormSectionTitle>Public Profile</FormSectionTitle>
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-          <span className="block h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-mint">
+          <span className="block h-32 w-24 shrink-0 overflow-hidden rounded-2xl bg-mint">
             <CandidatePhoto src={photoPreview} alt="Profile preview" iconSize={36} />
           </span>
+          <PhotoCropper
+            file={cropping}
+            onCancel={() => setCropping(null)}
+            onConfirm={(cropped) => {
+              setCropping(null)
+              setRemovePhoto(false)
+              clearErrors('profilePhoto')
+              setValue('profilePhoto', fileListOf(cropped), { shouldDirty: true })
+            }}
+          />
           <div className="flex flex-col gap-2">
             <FileField
               id="profilePhoto"
               label="Profile Picture"
               optional
               placeholder={newPhoto ? undefined : 'Choose a new photo'}
-              hint="JPG, PNG or WEBP (Max 2MB)"
-              accept="image/png,image/jpeg,image/webp"
-              fileName={newPhoto?.name}
-              {...register('profilePhoto', { onChange: () => setRemovePhoto(false) })}
+              hint="JPG, PNG or WEBP — you can crop and position it before saving"
+              accept={PHOTO_ACCEPT}
+              fileName={newPhoto ? 'New photo ready (cropped)' : undefined}
+              error={errors.profilePhoto?.message as string | undefined}
+              {...photoInput}
             />
+            {newPhoto && photoOriginal ? (
+              <button type="button" onClick={() => setCropping(photoOriginal)} className="w-fit text-xs font-semibold text-teal hover:underline">
+                Adjust crop again
+              </button>
+            ) : null}
             {app.profilePhotoPath && !newPhoto ? (
               <label className="flex items-center gap-2 text-xs font-semibold text-body">
                 <input type="checkbox" checked={removePhoto} onChange={(e) => setRemovePhoto(e.target.checked)} className="h-4 w-4 accent-teal" />

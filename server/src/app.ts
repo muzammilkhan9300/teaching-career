@@ -44,8 +44,14 @@ export function createApp() {
           // Homepage videos: thumbnails come from YouTube's image CDN and the
           // player is the privacy-enhanced youtube-nocookie embed — nothing
           // else external is allowed beyond helmet's defaults.
-          'img-src': ["'self'", 'data:', 'https://i.ytimg.com'],
+          // blob: = local previews of a photo the user just picked (and the
+          // crop editor); those URLs only exist inside the page that made them.
+          'img-src': ["'self'", 'data:', 'blob:', 'https://i.ytimg.com'],
           'frame-src': ['https://www.youtube-nocookie.com'],
+          // The candidate-photo crop editor runs a self-hosted WebAssembly face
+          // detector (site/public/vendor/face). This allows compiling WASM
+          // from our own origin only; it does not allow eval().
+          'script-src': ["'self'", "'wasm-unsafe-eval'"],
         },
       },
     }),

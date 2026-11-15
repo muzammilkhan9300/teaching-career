@@ -30,6 +30,11 @@ import {
   Play,
   CalendarDays,
   Globe,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
+  Crosshair,
+  ScanFace,
   type LucideProps,
 } from 'lucide-react'
 import { FaInstagram, FaFacebook, FaLinkedin, FaYoutube, FaWhatsapp } from 'react-icons/fa6'
@@ -69,6 +74,11 @@ export const BellIcon = Bell
 export const PlayIcon = Play
 export const CalendarIcon = CalendarDays
 export const GlobeIcon = Globe
+export const ZoomInIcon = ZoomIn
+export const ZoomOutIcon = ZoomOut
+export const ResetIcon = RotateCcw
+export const CrosshairIcon = Crosshair
+export const ScanFaceIcon = ScanFace
 
 export const WhatsappIcon = fromReactIcon(FaWhatsapp)
 export const InstagramIcon = fromReactIcon(FaInstagram)

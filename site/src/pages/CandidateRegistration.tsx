@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -16,6 +16,7 @@ import { candidateRegistrationSchema, type CandidateRegistrationInput } from '@/
 import { AlertIcon, CapIcon, CheckCircleIcon, ClockIcon, InfoIcon, LockIcon, PersonIcon } from '@/components/icons'
 import type { MyCandidateApplication } from '@/types'
 import { usePreviewUrl } from '@/lib/usePreviewUrl'
+import { PHOTO_ACCEPT, PhotoCropper, checkPhotoFile, fileListOf } from '@/components/ui/PhotoCropper'
 import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
 
 import { CANDIDATE_CITIES as CITIES, CLASSES, QUALIFICATIONS, SUBJECTS } from '@/lib/candidateOptions'
@@ -110,6 +111,9 @@ export default function CandidateRegistration() {
     handleSubmit,
     watch,
     reset,
+    setValue,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<CandidateRegistrationInput>({
     resolver: zodResolver(candidateRegistrationSchema),
@@ -126,6 +130,23 @@ export default function CandidateRegistration() {
   const classes = watch('classes') ?? []
   const profilePhoto = watch('profilePhoto')
   const photoPreviewUrl = usePreviewUrl(profilePhoto?.[0])
+  const [cropping, setCropping] = useState<File | null>(null)
+  const [photoOriginal, setPhotoOriginal] = useState<File | null>(null)
+  // The picked file opens the crop editor; only the cropped result goes into the form.
+  const photoInput = {
+    ...register('profilePhoto'),
+    onChange: async (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      e.target.value = ''
+      if (!file) return
+      const problem = checkPhotoFile(file)
+      if (problem) setError('profilePhoto', { message: problem })
+      else {
+        setPhotoOriginal(file)
+        setCropping(file)
+      }
+    },
+  }
   const degreeDocument = watch('degreeDocument')
   const experienceDocument = watch('experienceDocument')
   const policeVerification = watch('policeVerification')
@@ -217,17 +238,34 @@ export default function CandidateRegistration() {
                   <p className="text-sm text-body">Profile photo is optional — a passport-size, professional-looking photo is preferred.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="block h-24 w-24 shrink-0 overflow-hidden rounded-2xl bg-mint">
+                  <span className="block h-32 w-24 shrink-0 overflow-hidden rounded-2xl bg-mint">
                     <CandidatePhoto src={photoPreviewUrl || myApplication?.profilePhotoPath} alt="Profile photo preview" iconSize={36} />
                   </span>
-                  <FileField
-                    id="profilePhoto"
-                    placeholder="Upload Image"
-                    accept="image/png, image/jpeg"
-                    fileName={profilePhoto?.[0]?.name}
-                    error={errors.profilePhoto?.message as string | undefined}
-                    {...register('profilePhoto')}
+                  <PhotoCropper
+                    file={cropping}
+                    onCancel={() => setCropping(null)}
+                    onConfirm={(cropped) => {
+                      setCropping(null)
+                      clearErrors('profilePhoto')
+                      setValue('profilePhoto', fileListOf(cropped), { shouldValidate: true })
+                    }}
                   />
+                  <div className="flex flex-col gap-2">
+                    <FileField
+                      id="profilePhoto"
+                      placeholder="Upload Image"
+                      hint="JPG, PNG or WEBP — crop it before saving"
+                      accept={PHOTO_ACCEPT}
+                      fileName={profilePhoto?.[0] ? 'Photo ready (cropped)' : undefined}
+                      error={errors.profilePhoto?.message as string | undefined}
+                      {...photoInput}
+                    />
+                    {profilePhoto?.[0] && photoOriginal ? (
+                      <button type="button" onClick={() => setCropping(photoOriginal)} className="w-fit text-xs font-semibold text-teal hover:underline">
+                        Adjust crop again
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
 

@@ -6,8 +6,11 @@ import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
 export function CandidateCard({ candidate }: { candidate: Candidate }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-tc transition hover:-translate-y-1 hover:shadow-tc-lg">
-      <div className="relative h-48 w-full overflow-hidden bg-mint">
-        <CandidatePhoto src={candidate.photo} alt={`${candidate.name} — profile photo`} iconSize={48} lazy />
+      <div className="relative flex h-48 w-full justify-center overflow-hidden bg-mint">
+        {/* Same 3:4 passport frame as everywhere else, so head and shoulders are never cut off. */}
+        <span className="block h-full w-36 shrink-0 overflow-hidden">
+          <CandidatePhoto src={candidate.photo} alt={`${candidate.name} — profile photo`} iconSize={48} lazy />
+        </span>
         {candidate.verified ? (
           <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-teal-deep shadow-tc">
             <CheckCircleIcon size={13} />

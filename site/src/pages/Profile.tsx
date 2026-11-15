@@ -30,9 +30,12 @@ function StatusCard({
   status,
   tone,
   text,
+  photo,
   children,
 }: {
   icon: typeof PersonIcon
+  /** Candidate cards: the profile photo (3:4 portrait) in place of the icon. */
+  photo?: string
   title: string
   status: string
   tone: Tone
@@ -42,9 +45,15 @@ function StatusCard({
   return (
     <div className="mb-4 rounded-2xl border border-line bg-mint/30 p-4">
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-teal-deep shadow-tc">
-          <Icon size={18} />
-        </span>
+        {photo ? (
+          <span className="block h-16 w-12 shrink-0 overflow-hidden rounded-xl bg-white shadow-tc">
+            <CandidatePhoto src={photo} alt="Your profile photo" iconSize={18} />
+          </span>
+        ) : (
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-teal-deep shadow-tc">
+            <Icon size={18} />
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-extrabold text-navy">{title}</p>
@@ -53,7 +62,7 @@ function StatusCard({
           <p className="mt-1 text-xs leading-relaxed text-body">{text}</p>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2 pl-[52px]">{children}</div>
+      <div className={`mt-3 flex flex-wrap gap-2 ${photo ? 'pl-[60px]' : 'pl-[52px]'}`}>{children}</div>
     </div>
   )
 }
@@ -71,7 +80,7 @@ function CandidateCard({ app, loading }: { app: MyCandidateApplication | null | 
   }
   if (app.applicationStatus === 'Verified' && app.publishedCandidateId) {
     return (
-      <StatusCard icon={PersonIcon} title="Candidate profile" status="Verified" tone="live" text="Your profile is live. Edit your photo, about me, skills, education and contact details at any time.">
+      <StatusCard icon={PersonIcon} title="Candidate profile" photo={app.profilePhotoPath} status="Verified" tone="live" text="Your profile is live. Edit your photo, about me, skills, education and contact details at any time.">
         <Button to="/profile/candidate/edit" icon={<EditIcon size={13} />} className={smallButton}>Edit Profile</Button>
         <Button to={`/candidate-profiles/${app.publishedCandidateId}`} variant="outline" className={smallButton}>View Public Profile</Button>
       </StatusCard>
@@ -79,13 +88,13 @@ function CandidateCard({ app, loading }: { app: MyCandidateApplication | null | 
   }
   if (app.applicationStatus === 'Rejected') {
     return (
-      <StatusCard icon={PersonIcon} title="Candidate profile" status="Needs changes" tone="changes" text="Your registration needs changes before it can be verified. Review the feedback, update it and resubmit.">
+      <StatusCard icon={PersonIcon} title="Candidate profile" photo={app.profilePhotoPath} status="Needs changes" tone="changes" text="Your registration needs changes before it can be verified. Review the feedback, update it and resubmit.">
         <Button to="/candidate-registration" className={smallButton}>Update &amp; Resubmit</Button>
       </StatusCard>
     )
   }
   return (
-    <StatusCard icon={PersonIcon} title="Candidate profile" status="Under review" tone="review" text="The TeachingCareer team is reviewing your registration. You'll be able to edit your profile once it's verified.">
+    <StatusCard icon={PersonIcon} title="Candidate profile" photo={app.profilePhotoPath} status="Under review" tone="review" text="The TeachingCareer team is reviewing your registration. You'll be able to edit your profile once it's verified.">
       <Button to="/candidate-registration" variant="outline" className={smallButton}>View Application</Button>
     </StatusCard>
   )

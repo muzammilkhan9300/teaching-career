@@ -120,7 +120,7 @@ export default function CandidateProfileDetail() {
         <div className="tc-container">
           <FormCard>
             <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
-              <div className="h-28 w-28 shrink-0 overflow-hidden rounded-2xl bg-mint">
+              <div className="h-36 w-27 shrink-0 overflow-hidden rounded-2xl bg-mint">
                 <CandidatePhoto src={candidate.photo} alt={candidate.name} iconSize={40} />
               </div>
               <div className="flex flex-col items-center gap-2 sm:items-start">
