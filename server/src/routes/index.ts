@@ -23,7 +23,7 @@ import {
 } from './admin/adminResources.js'
 import { homepageRouter, homepageUpdatesRouter, schoolRequirementsRouter } from './homepage.js'
 import { adminUploadsRouter } from './admin/adminUploads.js'
-import { profileEditRouter } from './profileEdit.js'
+import { profileEditRouter, adminProfileEditRouter } from './profileEdit.js'
 import {
   adminCandidateApplicationsRouter,
   adminSchoolRegistrationsRouter,
@@ -80,6 +80,7 @@ apiRouter.use('/admin/homepage-updates', adminHomepageUpdatesRouter)
 apiRouter.use('/admin/homepage-videos', adminHomepageVideosRouter)
 apiRouter.use('/admin/hero-slides', adminHeroSlidesRouter)
 apiRouter.use('/admin/uploads', adminUploadsRouter)
+apiRouter.use('/admin/profile-edit', adminProfileEditRouter)
 
 apiRouter.use('/admin/candidate-applications', adminCandidateVerificationRouter)
 apiRouter.use('/admin/candidate-applications', adminCandidateApplicationsRouter)

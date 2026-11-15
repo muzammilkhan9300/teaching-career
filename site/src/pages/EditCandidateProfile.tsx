@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Link, Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
@@ -12,7 +12,7 @@ import { ChoiceChip, ChoiceChipGroup, FileField, SelectField, TextField, Textare
 import { useToast } from '@/components/ui/Toast'
 import { CheckCircleIcon, LockIcon, PersonIcon, ShieldIcon } from '@/components/icons'
 import { useUserAuth } from '@/auth/UserAuthContext'
-import { useMyCandidateApplication, useUpdateCandidateProfile } from '@/lib/queries'
+import { useAdminCandidateApplication, useAdminUpdateCandidateProfile, useMyCandidateApplication, useUpdateCandidateProfile } from '@/lib/queries'
 import { CANDIDATE_CITIES, CLASSES, QUALIFICATIONS, SUBJECTS } from '@/lib/candidateOptions'
 import { serverErrors } from '@/lib/formErrors'
 import { formatShortDate } from '@/lib/dates'
@@ -73,7 +73,7 @@ function defaultsFrom(app: MyCandidateApplication): FormValues {
 }
 
 /** Read-only view of the documents behind the verification — no replace/delete controls by design. */
-function ProtectedDocuments({ app }: { app: MyCandidateApplication }) {
+function ProtectedDocuments({ app, adminMode }: { app: MyCandidateApplication; adminMode: boolean }) {
   const docs = [
     { label: 'Resume / CV', path: app.degreeDocumentPath, required: true },
     { label: 'Experience letter', path: app.experienceDocumentPath, required: app.isFresher === 'no' },
@@ -99,24 +99,36 @@ function ProtectedDocuments({ app }: { app: MyCandidateApplication }) {
           </li>
         ))}
       </ul>
-      <p className="text-xs leading-relaxed text-body">
-        Documents can&rsquo;t be uploaded, replaced or deleted from this page. To submit new documents — for example to add
-        teaching experience or home tuition — use{' '}
-        <Link to="/candidate-registration" className="font-semibold text-teal-deep hover:underline">
-          Update &amp; Resubmit Registration
-        </Link>
-        , which goes through review by the TeachingCareer team.
-      </p>
+      {adminMode ? (
+        <p className="text-xs leading-relaxed text-body">
+          Verification documents can&rsquo;t be uploaded, replaced or deleted from this page — they&rsquo;re reviewed under{' '}
+          <Link to="/admin/candidate-applications" className="font-semibold text-teal-deep hover:underline">
+            Admin → Candidate Applications
+          </Link>
+          .
+        </p>
+      ) : (
+        <p className="text-xs leading-relaxed text-body">
+          Documents can&rsquo;t be uploaded, replaced or deleted from this page. To submit new documents — for example to add
+          teaching experience or home tuition — use{' '}
+          <Link to="/candidate-registration" className="font-semibold text-teal-deep hover:underline">
+            Update &amp; Resubmit Registration
+          </Link>
+          , which goes through review by the TeachingCareer team.
+        </p>
+      )}
     </div>
   )
 }
 
-function EditForm({ app }: { app: MyCandidateApplication }) {
+function EditForm({ app, adminMode = false }: { app: MyCandidateApplication; adminMode?: boolean }) {
   const navigate = useNavigate()
   const { showToast } = useToast()
   const { user } = useUserAuth()
   const queryClient = useQueryClient()
-  const updateProfile = useUpdateCandidateProfile()
+  const ownerUpdate = useUpdateCandidateProfile()
+  const adminUpdate = useAdminUpdateCandidateProfile(app.publishedCandidateId ?? '')
+  const updateProfile = adminMode ? adminUpdate : ownerUpdate
   const [formError, setFormError] = useState<string | null>(null)
   const [removePhoto, setRemovePhoto] = useState(false)
 
@@ -148,14 +160,18 @@ function EditForm({ app }: { app: MyCandidateApplication }) {
 
     updateProfile.mutate(fd, {
       onSuccess: () => {
-        showToast({ variant: 'success', title: 'Profile updated', description: 'Your changes are now live on your public profile.' })
+        showToast({
+          variant: 'success',
+          title: 'Profile updated',
+          description: adminMode ? `Changes to ${values.fullName}'s profile are now live.` : 'Your changes are now live on your public profile.',
+        })
         navigate(publicUrl)
       },
       onError: (err) => {
         if (err instanceof ApiError && err.status === 401) {
           // Session expired mid-edit: log in again, then come straight back to this form.
           void queryClient.resetQueries({ queryKey: ['user', 'me'] })
-          navigate('/login', { state: { from: `${publicUrl}?edit=1`, sessionExpired: true } })
+          navigate('/login', { state: { from: adminMode ? `${publicUrl}/edit` : `${publicUrl}?edit=1`, sessionExpired: true } })
           return
         }
         const { fields, message } = serverErrors(err)
@@ -168,6 +184,15 @@ function EditForm({ app }: { app: MyCandidateApplication }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8" noValidate>
+      {adminMode ? (
+        <p className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <ShieldIcon size={16} className="mt-0.5 shrink-0" />
+          <span>
+            You&rsquo;re editing <strong>{app.fullName}</strong>&rsquo;s profile as an admin. Changes go live immediately and are
+            recorded in the audit log.
+          </span>
+        </p>
+      ) : null}
       {formError ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600" role="alert">{formError}</p> : null}
 
       <div className="flex flex-col gap-5">
@@ -271,11 +296,11 @@ function EditForm({ app }: { app: MyCandidateApplication }) {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <TextField id="whatsapp" label="Phone / WhatsApp" type="tel" required error={errors.whatsapp?.message} {...register('whatsapp')} />
           <TextField id="email" label="Contact Email" type="email" required error={errors.email?.message} {...register('email')} />
-          <TextField id="loginEmail" label="Login Email" value={user?.email ?? ''} disabled readOnly />
+          {adminMode ? null : <TextField id="loginEmail" label="Login Email" value={user?.email ?? ''} disabled readOnly />}
         </div>
       </div>
 
-      <ProtectedDocuments app={app} />
+      <ProtectedDocuments app={app} adminMode={adminMode} />
 
       <div className="flex flex-wrap items-center gap-3 border-t border-line pt-6">
         <button
@@ -335,7 +360,87 @@ function EditCandidateProfileContent() {
   )
 }
 
+function AdminEditCandidateContent({ candidateId }: { candidateId: string }) {
+  const { can, isLoading: authLoading } = useUserAuth()
+  const allowed = can('manageContent')
+  const { data: app, isPending, error } = useAdminCandidateApplication(allowed ? candidateId : undefined)
+
+  if (authLoading || (allowed && isPending)) {
+    return (
+      <div className="flex justify-center py-10">
+        <span className="h-10 w-10 animate-spin rounded-full border-4 border-mint border-t-teal" aria-label="Loading" />
+      </div>
+    )
+  }
+  if (error instanceof ApiError && error.status === 401) {
+    return <Navigate to="/login" replace state={{ from: `/candidate-profiles/${candidateId}/edit`, sessionExpired: true }} />
+  }
+
+  const notice = (title: string, text: string, to: string, label: string) => (
+    <FormCard>
+      <div className="flex flex-col items-center gap-4 text-center" role="alert">
+        <ShieldIcon size={28} className="text-teal-deep" />
+        <h2 className="text-lg font-extrabold text-navy">{title}</h2>
+        <p className="max-w-md text-sm text-body">{text}</p>
+        <Button to={to}>{label}</Button>
+      </div>
+    </FormCard>
+  )
+
+  if (!allowed || (error instanceof ApiError && error.status === 403)) {
+    return notice(
+      'You are not authorized to edit this profile',
+      'Only the candidate who owns this profile, or a TeachingCareer admin, can edit it.',
+      `/candidate-profiles/${candidateId}`,
+      'Back to Profile',
+    )
+  }
+  if (error || !app) {
+    const message = error instanceof ApiError ? error.message : 'This profile could not be loaded.'
+    return notice('This profile can’t be edited here', message, '/admin/candidates', 'Go to Admin → Candidates')
+  }
+  if (app.applicationStatus !== 'Verified') {
+    return notice(
+      'Changes are awaiting review',
+      'This candidate has resubmitted their registration. Verify or reject it first, then the profile can be edited.',
+      '/admin/candidate-applications',
+      'Review Candidate Applications',
+    )
+  }
+  return (
+    <FormCard>
+      <EditForm key={app.id} app={app} adminMode />
+    </FormCard>
+  )
+}
+
 export default function EditCandidateProfile() {
+  // /candidate-profiles/:id/edit = an admin editing any profile; /profile/candidate/edit = the owner's own.
+  const { id: adminCandidateId } = useParams<{ id: string }>()
+  if (adminCandidateId) {
+    return (
+      <>
+        <Helmet>
+          <title>Edit Candidate Profile (Admin) — TeachingCareer</title>
+        </Helmet>
+        <Breadcrumb
+          items={[
+            { label: 'Profiles', to: '/candidate-profiles' },
+            { label: 'Profile', to: `/candidate-profiles/${adminCandidateId}` },
+            { label: 'Edit' },
+          ]}
+        />
+        <PageHero eyebrow="Admin" title="Edit Candidate Profile" text="Update the information schools and parents see on this candidate's public profile." />
+        <section className="py-16">
+          <div className="tc-container">
+            <RequireLogin activity="edit this candidate profile">
+              <AdminEditCandidateContent candidateId={adminCandidateId} />
+            </RequireLogin>
+          </div>
+        </section>
+      </>
+    )
+  }
   return (
     <>
       <Helmet>

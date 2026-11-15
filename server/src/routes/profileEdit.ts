@@ -1,10 +1,13 @@
-import { Router, type Request } from 'express'
+import { Router, type Request, type Response } from 'express'
 import { CandidateApplication } from '../models/CandidateApplication.js'
 import { Candidate } from '../models/Candidate.js'
 import { SchoolRegistration } from '../models/SchoolRegistration.js'
 import { School } from '../models/School.js'
 import { asyncHandler } from '../middleware/asyncHandler.js'
 import { requireUser } from '../middleware/requireUser.js'
+import { requireAdmin } from '../middleware/requireAdmin.js'
+import { requirePermission } from '../lib/permissions.js'
+import { logAction } from '../lib/audit.js'
 import { writeLimiter } from '../middleware/rateLimiter.js'
 import { upload, uploadedFileUrl } from '../middleware/upload.js'
 import { candidateProfileEditSchema, schoolProfileEditSchema } from '../validation/profileEdit.js'
@@ -30,6 +33,12 @@ import { HttpError, NotFoundError } from '../utils/HttpError.js'
 //   and admins get a notification to review them.
 // Changes that need fresh documents (fresher -> experienced, home tuition)
 // still go through the existing resubmission flow on the registration pages.
+//
+// Admin editing (adminProfileEditRouter, mounted at /api/admin/profile-edit):
+// staff with the manageContent capability (admin, super_admin) can edit ANY
+// published profile by its public id, through exactly the same allow-listed
+// fields and file rules as the owner — verification documents stay protected
+// for admins here too. Every admin edit is written to the audit log.
 
 export const profileEditRouter = Router()
 
@@ -57,20 +66,14 @@ function queueOldImage(queue: string[], oldPath: string | undefined | null, newP
   if (oldPath && oldPath !== newPath && oldPath.startsWith(`/uploads/${subdir}/`)) queue.push(oldPath)
 }
 
-profileEditRouter.put(
-  '/candidate',
-  requireUser,
-  writeLimiter,
-  candidateFiles,
-  asyncHandler(async (req, res) => {
+type Actor = 'owner' | 'admin'
+type CandidateApplicationDoc = InstanceType<typeof CandidateApplication>
+type SchoolRegistrationDoc = InstanceType<typeof SchoolRegistration>
+
+/** Shared by the owner and admin routes: same allow-listed fields, same file rules. */
+async function applyCandidateEdit(req: Request, res: Response, application: CandidateApplicationDoc, actor: Actor) {
+  {
     try {
-      const application = await CandidateApplication.findOne({ ownerId: req.user!.id })
-      if (!application || !application.publishedCandidateId) {
-        throw new HttpError(403, 'You can edit your profile once your candidate registration has been verified.')
-      }
-      if (application.applicationStatus !== 'Verified') {
-        throw new HttpError(409, 'Your registration has changes awaiting a decision. You can edit your profile again once it is verified.')
-      }
       const candidate = await Candidate.findById(application.publishedCandidateId)
       if (!candidate) throw new NotFoundError('Your public candidate profile could not be found.')
 
@@ -115,35 +118,47 @@ profileEditRouter.put(
       // Only the mapped public fields — `verified` and `status` are left exactly as they were.
       const updated = await Candidate.findByIdAndUpdate(candidate._id, candidateFieldsFrom(application), { new: true, runValidators: true })
 
-      notify(
-        'profile-update',
-        previousName !== application.fullName
-          ? `Candidate "${previousName}" changed their name to "${application.fullName}" and updated their profile`
-          : `${application.fullName} updated their candidate profile`,
-        '/admin/candidates',
-      )
+      if (actor === 'admin') {
+        logAction(req, 'update', 'CandidateProfile', String(candidate._id), `Edited profile of ${application.fullName}`)
+      } else {
+        notify(
+          'profile-update',
+          previousName !== application.fullName
+            ? `Candidate "${previousName}" changed their name to "${application.fullName}" and updated their profile`
+            : `${application.fullName} updated their candidate profile`,
+          '/admin/candidates',
+        )
+      }
       res.json({ application, candidate: updated })
     } catch (err) {
       discardUploads(req)
       throw err
     }
+  }
+}
+
+profileEditRouter.put(
+  '/candidate',
+  requireUser,
+  writeLimiter,
+  candidateFiles,
+  asyncHandler(async (req, res) => {
+    const application = await CandidateApplication.findOne({ ownerId: req.user!.id })
+    if (!application || !application.publishedCandidateId) {
+      discardUploads(req)
+      throw new HttpError(403, 'You can edit your profile once your candidate registration has been verified.')
+    }
+    if (application.applicationStatus !== 'Verified') {
+      discardUploads(req)
+      throw new HttpError(409, 'Your registration has changes awaiting a decision. You can edit your profile again once it is verified.')
+    }
+    await applyCandidateEdit(req, res, application, 'owner')
   }),
 )
 
-profileEditRouter.put(
-  '/school',
-  requireUser,
-  writeLimiter,
-  schoolFiles,
-  asyncHandler(async (req, res) => {
+async function applySchoolEdit(req: Request, res: Response, registration: SchoolRegistrationDoc, actor: Actor) {
+  {
     try {
-      const registration = await SchoolRegistration.findOne({ ownerId: req.user!.id })
-      if (!registration || !registration.publishedSchoolId) {
-        throw new HttpError(403, 'You can edit your school profile once your school registration has been approved.')
-      }
-      if (registration.registrationStatus !== 'Approved') {
-        throw new HttpError(409, 'Your registration has changes awaiting a decision. You can edit your profile again once it is approved.')
-      }
       const school = await School.findById(registration.publishedSchoolId)
       if (!school) throw new NotFoundError('Your public school profile could not be found.')
 
@@ -184,17 +199,116 @@ profileEditRouter.put(
       // Only the mapped public fields — `status` (Active/Suspended) is left as it was.
       const updated = await School.findByIdAndUpdate(school._id, schoolFieldsFrom(registration), { new: true, runValidators: true })
 
-      notify(
-        'profile-update',
-        previousName !== registration.schoolName
-          ? `School "${previousName}" was renamed to "${registration.schoolName}" — please review`
-          : `${registration.schoolName} updated its school profile`,
-        '/admin/schools',
-      )
+      if (actor === 'admin') {
+        logAction(req, 'update', 'SchoolProfile', String(school._id), `Edited profile of ${registration.schoolName}`)
+      } else {
+        notify(
+          'profile-update',
+          previousName !== registration.schoolName
+            ? `School "${previousName}" was renamed to "${registration.schoolName}" — please review`
+            : `${registration.schoolName} updated its school profile`,
+          '/admin/schools',
+        )
+      }
       res.json({ registration, school: updated })
     } catch (err) {
       discardUploads(req)
       throw err
     }
+  }
+}
+
+profileEditRouter.put(
+  '/school',
+  requireUser,
+  writeLimiter,
+  schoolFiles,
+  asyncHandler(async (req, res) => {
+    const registration = await SchoolRegistration.findOne({ ownerId: req.user!.id })
+    if (!registration || !registration.publishedSchoolId) {
+      discardUploads(req)
+      throw new HttpError(403, 'You can edit your school profile once your school registration has been approved.')
+    }
+    if (registration.registrationStatus !== 'Approved') {
+      discardUploads(req)
+      throw new HttpError(409, 'Your registration has changes awaiting a decision. You can edit your profile again once it is approved.')
+    }
+    await applySchoolEdit(req, res, registration, 'owner')
+  }),
+)
+
+// ---- Admin: edit any published profile by its public id ----
+
+export const adminProfileEditRouter = Router()
+adminProfileEditRouter.use(requireAdmin, requirePermission('manageContent'))
+
+const NOT_LINKED =
+  'This profile was not created from a registration, so there is no full profile to edit. Edit its listing under Admin → Candidates or Admin → Schools instead.'
+
+const isObjectId = (id: string) => /^[a-f0-9]{24}$/i.test(id)
+
+async function candidateApplicationFor(candidateId: string) {
+  if (!isObjectId(candidateId)) throw new NotFoundError('Candidate profile not found.')
+  const application = await CandidateApplication.findOne({ publishedCandidateId: candidateId })
+  if (!application) throw new NotFoundError(NOT_LINKED)
+  return application
+}
+
+async function schoolRegistrationFor(schoolId: string) {
+  if (!isObjectId(schoolId)) throw new NotFoundError('School profile not found.')
+  const registration = await SchoolRegistration.findOne({ publishedSchoolId: schoolId })
+  if (!registration) throw new NotFoundError(NOT_LINKED)
+  return registration
+}
+
+adminProfileEditRouter.get(
+  '/candidate/:candidateId',
+  asyncHandler(async (req, res) => {
+    res.json(await candidateApplicationFor(String(req.params.candidateId)))
+  }),
+)
+
+adminProfileEditRouter.put(
+  '/candidate/:candidateId',
+  writeLimiter,
+  candidateFiles,
+  asyncHandler(async (req, res) => {
+    let application: CandidateApplicationDoc
+    try {
+      application = await candidateApplicationFor(String(req.params.candidateId))
+      if (application.applicationStatus !== 'Verified') {
+        throw new HttpError(409, 'This candidate has resubmitted changes awaiting review. Verify or reject them under Candidate Applications first.')
+      }
+    } catch (err) {
+      discardUploads(req)
+      throw err
+    }
+    await applyCandidateEdit(req, res, application, 'admin')
+  }),
+)
+
+adminProfileEditRouter.get(
+  '/school/:schoolId',
+  asyncHandler(async (req, res) => {
+    res.json(await schoolRegistrationFor(String(req.params.schoolId)))
+  }),
+)
+
+adminProfileEditRouter.put(
+  '/school/:schoolId',
+  writeLimiter,
+  schoolFiles,
+  asyncHandler(async (req, res) => {
+    let registration: SchoolRegistrationDoc
+    try {
+      registration = await schoolRegistrationFor(String(req.params.schoolId))
+      if (registration.registrationStatus !== 'Approved') {
+        throw new HttpError(409, 'This school has resubmitted changes awaiting review. Approve or reject them under School Registrations first.')
+      }
+    } catch (err) {
+      discardUploads(req)
+      throw err
+    }
+    await applySchoolEdit(req, res, registration, 'admin')
   }),
 )

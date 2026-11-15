@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { PageHero } from '@/components/sections/PageHero'
@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/Button'
 import { FileField, TextField, TextareaField } from '@/components/ui/FormFields'
 import { useToast } from '@/components/ui/Toast'
 import { CheckCircleIcon, InfoIcon, LockIcon, ShieldIcon } from '@/components/icons'
-import { useMySchoolRegistration, useUpdateSchoolProfile } from '@/lib/queries'
+import { useAdminSchoolRegistration, useAdminUpdateSchoolProfile, useMySchoolRegistration, useUpdateSchoolProfile } from '@/lib/queries'
+import { useUserAuth } from '@/auth/UserAuthContext'
+import { ApiError } from '@/lib/api'
 import { serverErrors } from '@/lib/formErrors'
 import { formatShortDate } from '@/lib/dates'
 import { usePreviewUrl } from '@/lib/usePreviewUrl'
@@ -52,7 +54,7 @@ function defaultsFrom(reg: MySchoolRegistration): FormValues {
 }
 
 /** Read-only: the verified registration details and approval status — no document controls by design. */
-function ProtectedRegistration({ reg }: { reg: MySchoolRegistration }) {
+function ProtectedRegistration({ reg, adminMode }: { reg: MySchoolRegistration; adminMode: boolean }) {
   const rows: [string, string | undefined][] = [
     ['Year established', reg.schoolYear],
     ['Branches', reg.schoolBranches],
@@ -78,14 +80,25 @@ function ProtectedRegistration({ reg }: { reg: MySchoolRegistration }) {
           </div>
         ))}
       </dl>
-      <p className="text-xs leading-relaxed text-body">
-        These verified registration details and any verification records can&rsquo;t be changed from this page. To change
-        them, use{' '}
-        <Link to="/school-registration" className="font-semibold text-teal-deep hover:underline">
-          Update &amp; Resubmit Registration
-        </Link>
-        , which goes through review by the TeachingCareer team.
-      </p>
+      {adminMode ? (
+        <p className="text-xs leading-relaxed text-body">
+          Verified registration details and verification records can&rsquo;t be changed from this page — they&rsquo;re
+          reviewed under{' '}
+          <Link to="/admin/school-registrations" className="font-semibold text-teal-deep hover:underline">
+            Admin → School Registrations
+          </Link>
+          .
+        </p>
+      ) : (
+        <p className="text-xs leading-relaxed text-body">
+          These verified registration details and any verification records can&rsquo;t be changed from this page. To change
+          them, use{' '}
+          <Link to="/school-registration" className="font-semibold text-teal-deep hover:underline">
+            Update &amp; Resubmit Registration
+          </Link>
+          , which goes through review by the TeachingCareer team.
+        </p>
+      )}
     </div>
   )
 }
@@ -94,10 +107,12 @@ function ImagePreview({ src, alt, className }: { src: string; alt: string; class
   return src ? <img src={src} alt={alt} className={className} /> : <span className={`${className} flex items-center justify-center text-xs text-body`}>No image</span>
 }
 
-function EditForm({ reg }: { reg: MySchoolRegistration }) {
+function EditForm({ reg, adminMode = false }: { reg: MySchoolRegistration; adminMode?: boolean }) {
   const navigate = useNavigate()
   const { showToast } = useToast()
-  const updateProfile = useUpdateSchoolProfile()
+  const ownerUpdate = useUpdateSchoolProfile()
+  const adminUpdate = useAdminUpdateSchoolProfile(reg.publishedSchoolId ?? '')
+  const updateProfile = adminMode ? adminUpdate : ownerUpdate
   const [formError, setFormError] = useState<string | null>(null)
   const [removeCover, setRemoveCover] = useState(false)
 
@@ -127,10 +142,18 @@ function EditForm({ reg }: { reg: MySchoolRegistration }) {
 
     updateProfile.mutate(fd, {
       onSuccess: () => {
-        showToast({ variant: 'success', title: 'School profile updated', description: 'Your changes are now live on your public profile.' })
+        showToast({
+          variant: 'success',
+          title: 'School profile updated',
+          description: adminMode ? `Changes to ${values.schoolName}'s profile are now live.` : 'Your changes are now live on your public profile.',
+        })
         navigate(publicUrl)
       },
       onError: (err) => {
+        if (adminMode && err instanceof ApiError && err.status === 401) {
+          navigate('/login', { state: { from: `${publicUrl}/edit`, sessionExpired: true } })
+          return
+        }
         const { fields, message } = serverErrors(err)
         for (const [name, msg] of Object.entries(fields)) setError(name as keyof FormValues, { message: msg })
         setFormError(message)
@@ -141,6 +164,15 @@ function EditForm({ reg }: { reg: MySchoolRegistration }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-8" noValidate>
+      {adminMode ? (
+        <p className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <ShieldIcon size={16} className="mt-0.5 shrink-0" />
+          <span>
+            You&rsquo;re editing <strong>{reg.schoolName}</strong>&rsquo;s profile as an admin. Changes go live immediately and
+            are recorded in the audit log.
+          </span>
+        </p>
+      ) : null}
       {formError ? <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600" role="alert">{formError}</p> : null}
 
       <div className="flex flex-col gap-5">
@@ -177,7 +209,7 @@ function EditForm({ reg }: { reg: MySchoolRegistration }) {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <div className="sm:col-span-2 lg:col-span-1">
             <TextField id="schoolName" label="School Name" required error={errors.schoolName?.message} {...register('schoolName')} />
-            {nameChanged ? (
+            {nameChanged && !adminMode ? (
               <p className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-700">
                 <InfoIcon size={13} className="mt-px shrink-0" />
                 Name changes are reported to the TeachingCareer team for review.
@@ -223,7 +255,7 @@ function EditForm({ reg }: { reg: MySchoolRegistration }) {
         </div>
       </div>
 
-      <ProtectedRegistration reg={reg} />
+      <ProtectedRegistration reg={reg} adminMode={adminMode} />
 
       <div className="flex flex-wrap items-center gap-3 border-t border-line pt-6">
         <button
@@ -279,7 +311,87 @@ function EditSchoolProfileContent() {
   )
 }
 
+function AdminEditSchoolContent({ schoolId }: { schoolId: string }) {
+  const { can, isLoading: authLoading } = useUserAuth()
+  const allowed = can('manageContent')
+  const { data: reg, isPending, error } = useAdminSchoolRegistration(allowed ? schoolId : undefined)
+
+  if (authLoading || (allowed && isPending)) {
+    return (
+      <div className="flex justify-center py-10">
+        <span className="h-10 w-10 animate-spin rounded-full border-4 border-mint border-t-teal" aria-label="Loading" />
+      </div>
+    )
+  }
+  if (error instanceof ApiError && error.status === 401) {
+    return <Navigate to="/login" replace state={{ from: `/school-profiles/${schoolId}/edit`, sessionExpired: true }} />
+  }
+
+  const notice = (title: string, text: string, to: string, label: string) => (
+    <FormCard>
+      <div className="flex flex-col items-center gap-4 text-center" role="alert">
+        <ShieldIcon size={28} className="text-teal-deep" />
+        <h2 className="text-lg font-extrabold text-navy">{title}</h2>
+        <p className="max-w-md text-sm text-body">{text}</p>
+        <Button to={to}>{label}</Button>
+      </div>
+    </FormCard>
+  )
+
+  if (!allowed || (error instanceof ApiError && error.status === 403)) {
+    return notice(
+      'You are not authorized to edit this profile',
+      'Only the school that owns this profile, or a TeachingCareer admin, can edit it.',
+      `/school-profiles/${schoolId}`,
+      'Back to Profile',
+    )
+  }
+  if (error || !reg) {
+    const message = error instanceof ApiError ? error.message : 'This profile could not be loaded.'
+    return notice('This profile can’t be edited here', message, '/admin/schools', 'Go to Admin → Schools')
+  }
+  if (reg.registrationStatus !== 'Approved') {
+    return notice(
+      'Changes are awaiting review',
+      'This school has resubmitted its registration. Approve or reject it first, then the profile can be edited.',
+      '/admin/school-registrations',
+      'Review School Registrations',
+    )
+  }
+  return (
+    <FormCard>
+      <EditForm key={reg.id} reg={reg} adminMode />
+    </FormCard>
+  )
+}
+
 export default function EditSchoolProfile() {
+  // /school-profiles/:id/edit = an admin editing any school; /profile/school/edit = the owner's own.
+  const { id: adminSchoolId } = useParams<{ id: string }>()
+  if (adminSchoolId) {
+    return (
+      <>
+        <Helmet>
+          <title>Edit School Profile (Admin) — TeachingCareer</title>
+        </Helmet>
+        <Breadcrumb
+          items={[
+            { label: 'Schools', to: '/school-profiles' },
+            { label: 'Profile', to: `/school-profiles/${adminSchoolId}` },
+            { label: 'Edit' },
+          ]}
+        />
+        <PageHero eyebrow="Admin" title="Edit School Profile" text="Update the information candidates see on this school's public profile." />
+        <section className="py-16">
+          <div className="tc-container">
+            <RequireLogin activity="edit this school profile">
+              <AdminEditSchoolContent schoolId={adminSchoolId} />
+            </RequireLogin>
+          </div>
+        </section>
+      </>
+    )
+  }
   return (
     <>
       <Helmet>

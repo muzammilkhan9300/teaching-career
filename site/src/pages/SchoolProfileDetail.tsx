@@ -9,12 +9,16 @@ import { VacancyManager } from '@/components/school-owner/VacancyManager'
 import { CheckCircleIcon, ChevronRightIcon, GlobeIcon, PinIcon, ShieldIcon } from '@/components/icons'
 import { EditIcon } from '@/components/icons/admin'
 import { ApiError } from '@/lib/api'
+import { useUserAuth } from '@/auth/UserAuthContext'
 
 export default function SchoolProfileDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: school, isPending, isError, error, refetch } = useSchool(id)
   const { data: myRegistration } = useMySchoolRegistration()
   const isOwner = Boolean(school) && myRegistration?.publishedSchoolId === id
+  // Admins (manageContent) may edit any school's profile; the server re-checks the role on every request.
+  const { isAuthenticated, can } = useUserAuth()
+  const canAdminEdit = isAuthenticated && can('manageContent')
 
   if (isPending) {
     return (
@@ -96,13 +100,18 @@ export default function SchoolProfileDetail() {
               </div>
             </div>
 
-            {isOwner ? (
+            {isOwner || canAdminEdit ? (
               <div className="mt-6 flex flex-col items-start gap-3 rounded-2xl bg-mint/50 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="flex items-center gap-2 text-sm font-semibold text-navy">
                   <ShieldIcon size={16} className="shrink-0 text-teal-deep" />
-                  You manage this school&rsquo;s profile.
+                  {isOwner ? <>You manage this school&rsquo;s profile.</> : <>You can edit this school&rsquo;s profile as an admin.</>}
                 </p>
-                <Button to="/profile/school/edit" variant="outline" icon={<EditIcon size={14} />} className="shrink-0 px-4 py-2 text-xs">
+                <Button
+                  to={isOwner ? '/profile/school/edit' : `/school-profiles/${id}/edit`}
+                  variant="outline"
+                  icon={<EditIcon size={14} />}
+                  className="shrink-0 px-4 py-2 text-xs"
+                >
                   Edit Profile
                 </Button>
               </div>

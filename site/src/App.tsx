@@ -135,8 +135,10 @@ function AppRoutes() {
             <Route path="manage-vacancies" element={<ManageVacancies />} />
             <Route path="candidate-profiles" element={<CandidateProfiles />} />
             <Route path="candidate-profiles/:id" element={<CandidateProfileDetail />} />
+            <Route path="candidate-profiles/:id/edit" element={<EditCandidateProfile />} />
             <Route path="school-profiles" element={<SchoolProfiles />} />
             <Route path="school-profiles/:id" element={<SchoolProfileDetail />} />
+            <Route path="school-profiles/:id/edit" element={<EditSchoolProfile />} />
             <Route path="vacancy/:id" element={<VacancyDetail />} />
             <Route path="school-requirements" element={<SchoolRequirements />} />
             <Route path="school-requirements/:id" element={<SchoolRequirementDetail />} />

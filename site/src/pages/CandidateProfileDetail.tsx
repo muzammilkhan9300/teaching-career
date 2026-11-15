@@ -20,7 +20,9 @@ export default function CandidateProfileDetail() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { isAuthenticated, isLoading: authLoading } = useUserAuth()
+  const { isAuthenticated, isLoading: authLoading, can } = useUserAuth()
+  // Admins (manageContent) may edit any candidate's profile; the server re-checks the role on every request.
+  const canAdminEdit = isAuthenticated && can('manageContent')
   // Owner check is UI-only (decides where the Edit button leads); the server
   // independently resolves the editable profile from the session on every
   // update and never accepts a candidate id, so this can't be bypassed.
@@ -45,6 +47,7 @@ export default function CandidateProfileDetail() {
     }
     if (checkingOwner) return
     if (isOwner) navigate('/profile/candidate/edit')
+    else if (canAdminEdit) navigate(`/candidate-profiles/${id}/edit`)
     else setEditNotice(NOT_AUTHORIZED)
   }
 
@@ -56,6 +59,10 @@ export default function CandidateProfileDetail() {
       navigate('/profile/candidate/edit', { replace: true })
       return
     }
+    if (isAuthenticated && !sessionExpired && canAdminEdit) {
+      navigate(`/candidate-profiles/${id}/edit`, { replace: true })
+      return
+    }
     if (isAuthenticated && !sessionExpired) setEditNotice(NOT_AUTHORIZED)
     setSearchParams(
       (prev) => {
@@ -65,7 +72,7 @@ export default function CandidateProfileDetail() {
       },
       { replace: true },
     )
-  }, [wantsEdit, candidate, authLoading, checkingOwner, isAuthenticated, sessionExpired, isOwner, navigate, setSearchParams])
+  }, [wantsEdit, candidate, authLoading, checkingOwner, isAuthenticated, sessionExpired, isOwner, canAdminEdit, id, navigate, setSearchParams])
 
   if (isPending) {
     return (
@@ -137,6 +144,11 @@ export default function CandidateProfileDetail() {
                   <p className="flex items-center gap-1.5 text-xs font-semibold text-body">
                     <ShieldIcon size={13} className="shrink-0 text-teal-deep" />
                     This is your public profile.
+                  </p>
+                ) : canAdminEdit ? (
+                  <p className="flex items-center gap-1.5 text-xs font-semibold text-body">
+                    <ShieldIcon size={13} className="shrink-0 text-teal-deep" />
+                    You can edit this profile as an admin.
                   </p>
                 ) : null}
               </div>

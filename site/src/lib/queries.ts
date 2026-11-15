@@ -255,3 +255,49 @@ export function useUpdateSchoolProfile() {
     },
   })
 }
+
+// ---- Admin: edit any published candidate/school profile (same form as the owner's) ----
+
+export function useAdminCandidateApplication(candidateId: string | undefined) {
+  return useQuery({
+    queryKey: ['admin-profile-edit', 'candidate', candidateId],
+    enabled: Boolean(candidateId),
+    retry: false,
+    queryFn: () => api.get<MyCandidateApplication>(`/admin/profile-edit/candidate/${candidateId}`),
+  })
+}
+
+export function useAdminUpdateCandidateProfile(candidateId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      api.putForm<{ application: MyCandidateApplication; candidate: Candidate }>(`/admin/profile-edit/candidate/${candidateId}`, formData),
+    onSuccess: ({ candidate }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-profile-edit'] })
+      queryClient.invalidateQueries({ queryKey: ['candidate', candidate.id] })
+      queryClient.invalidateQueries({ queryKey: ['candidates'] })
+    },
+  })
+}
+
+export function useAdminSchoolRegistration(schoolId: string | undefined) {
+  return useQuery({
+    queryKey: ['admin-profile-edit', 'school', schoolId],
+    enabled: Boolean(schoolId),
+    retry: false,
+    queryFn: () => api.get<MySchoolRegistration>(`/admin/profile-edit/school/${schoolId}`),
+  })
+}
+
+export function useAdminUpdateSchoolProfile(schoolId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      api.putForm<{ registration: MySchoolRegistration; school: School }>(`/admin/profile-edit/school/${schoolId}`, formData),
+    onSuccess: ({ school }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-profile-edit'] })
+      queryClient.invalidateQueries({ queryKey: ['school', school.id] })
+      queryClient.invalidateQueries({ queryKey: ['schools'] })
+    },
+  })
+}
