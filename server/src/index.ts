@@ -1,9 +1,11 @@
 import { env } from './config/env.js'
 import { connectDb } from './db/connect.js'
 import { createApp } from './app.js'
+import { bootstrapHomepageContent } from './seed/bootstrapHomepageContent.js'
 
 async function main() {
   await connectDb()
+  await bootstrapHomepageContent()
   const app = createApp()
   app.listen(env.port, () => {
     console.log(`[server] listening on port ${env.port} (${env.nodeEnv})`)
