@@ -8,6 +8,25 @@ import morgan from 'morgan'
 import { env } from './config/env.js'
 import { apiRouter } from './routes/index.js'
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js'
+import { asyncHandler } from './middleware/asyncHandler.js'
+import { openFile } from './lib/fileStore.js'
+
+// Public images only (the regex in createApp limits it to photos/logos/
+// covers/homepage). Filenames are unique per upload, so they're cacheable
+// forever. Verification documents are never served here.
+const serveStoredUpload = asyncHandler(async (req, res, next) => {
+  const [dir, name] = [req.params[0], req.params[1]]
+  const stored = await openFile(`${dir}/${name}`)
+  if (!stored) {
+    next() // falls through to the JSON 404
+    return
+  }
+  res.setHeader('Content-Type', stored.contentType)
+  res.setHeader('Content-Length', String(stored.length))
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+  res.setHeader('X-Upload-Storage', 'database')
+  stored.stream().on('error', next).pipe(res)
+})
 
 export function createApp() {
   const app = express()
@@ -42,10 +61,8 @@ export function createApp() {
   // NOT mounted here — they're only reachable through the authenticated
   // routes in routes/admin/adminDocuments.ts, and are deleted once a
   // candidate application is verified or rejected.
-  app.use('/uploads/photos', express.static(path.join(env.uploadsRoot, 'photos')))
-  app.use('/uploads/logos', express.static(path.join(env.uploadsRoot, 'logos')))
-  app.use('/uploads/covers', express.static(path.join(env.uploadsRoot, 'covers')))
-  app.use('/uploads/homepage', express.static(path.join(env.uploadsRoot, 'homepage')))
+  // Served from persistent storage (lib/fileStore.ts) at the same URLs as before.
+  app.get(/^\/uploads\/(photos|logos|covers|homepage)\/([A-Za-z0-9._-]+)$/, serveStoredUpload)
   app.use('/api', apiRouter)
 
   // This one process also serves the built React app when it's present (see

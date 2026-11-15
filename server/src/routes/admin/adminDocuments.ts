@@ -7,6 +7,7 @@ import { requireAdmin } from '../../middleware/requireAdmin.js'
 import { requirePermission } from '../../lib/permissions.js'
 import { NotFoundError } from '../../utils/HttpError.js'
 import { env } from '../../config/env.js'
+import { openFile } from '../../lib/fileStore.js'
 
 export const adminDocumentsRouter = Router()
 adminDocumentsRouter.use(requireAdmin, requirePermission('reviewSubmissions'))
@@ -48,8 +49,19 @@ adminDocumentsRouter.get(
     // filename is trusted; it's resolved against the fixed documents dir so
     // no path segment from the DB value can escape it.
     const filename = path.basename(storedPath)
-    const absolutePath = path.join(UPLOADS_ROOT, 'documents', filename)
 
+    // Persistent storage first (lib/fileStore.ts); the old on-disk folder only as a fallback.
+    const stored = /^[A-Za-z0-9._-]+$/.test(filename) ? await openFile(`documents/${filename}`) : null
+    if (stored) {
+      res.setHeader('Content-Type', stored.contentType)
+      res.setHeader('Content-Length', String(stored.length))
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`)
+      res.setHeader('Cache-Control', 'private, no-store')
+      stored.stream().on('error', () => res.destroy()).pipe(res)
+      return
+    }
+
+    const absolutePath = path.join(UPLOADS_ROOT, 'documents', filename)
     if (!fs.existsSync(absolutePath)) throw new NotFoundError('Document file is no longer available')
 
     res.sendFile(absolutePath)
