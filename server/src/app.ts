@@ -3,6 +3,7 @@ import path from 'node:path'
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import compression from 'compression'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import { env } from './config/env.js'
@@ -56,6 +57,10 @@ export function createApp() {
       },
     }),
   )
+  // gzip text responses (JS, CSS, HTML, JSON). Images and the WASM face
+  // detector are skipped automatically or already compressed. Without this
+  // the CDN pulled e.g. the 488KB main script uncompressed from this server.
+  app.use(compression())
   app.use(cors({ origin: env.clientOrigin, credentials: true }))
   app.use(morgan('dev'))
   app.use(express.json())
