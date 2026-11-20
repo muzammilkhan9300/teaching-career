@@ -5,6 +5,7 @@ import { requireAdmin } from '../middleware/requireAdmin.js'
 import { requirePermission } from '../lib/permissions.js'
 import { logAction } from '../lib/audit.js'
 import { settingsInputSchema } from '../validation/adminResources.js'
+import { cached } from '../lib/memoCache.js'
 
 export const settingsRouter = Router()
 
@@ -29,8 +30,7 @@ export async function getOrCreateSettings() {
 settingsRouter.get(
   '/',
   asyncHandler(async (_req, res) => {
-    const settings = await getOrCreateSettings()
-    res.json(settings)
+    res.json(await cached('settings', 5 * 60_000, getOrCreateSettings))
   }),
 )
 

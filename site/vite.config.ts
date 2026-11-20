@@ -31,6 +31,11 @@ function faceDetectionRuntime(): Plugin {
 }
 
 // https://vite.dev/config/
+// Hostinger builds with NODE_ENV=development set in its environment, which
+// made Vite ship React's large, slow development build to the live site.
+// A build is always for production.
+if (process.argv.includes('build')) process.env.NODE_ENV = 'production'
+
 export default defineConfig({
   plugins: [react(), tailwindcss(), faceDetectionRuntime()],
   resolve: {

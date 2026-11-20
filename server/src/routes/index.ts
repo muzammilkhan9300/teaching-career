@@ -41,6 +41,8 @@ import { adminHomeTutorAssignmentRouter } from './admin/adminHomeTutorAssignment
 import { adminNotificationsRouter } from './admin/adminNotifications.js'
 import { adminReportsRouter } from './admin/adminReports.js'
 
+import { clearCache } from '../lib/memoCache.js'
+
 export const apiRouter = Router()
 
 apiRouter.get('/health', (_req, res) => res.json({ ok: true }))
@@ -61,6 +63,12 @@ apiRouter.use('/contact-messages', contactMessagesRouter)
 
 apiRouter.use('/auth', userAuthRouter)
 apiRouter.use('/profile', profileEditRouter)
+
+// Any successful admin change may affect cached public data (lib/memoCache.ts).
+apiRouter.use('/admin', (req, res, next) => {
+  if (req.method !== 'GET') res.on('finish', () => res.statusCode < 400 && clearCache())
+  next()
+})
 
 apiRouter.use('/admin/stats', adminStatsRouter)
 apiRouter.use('/admin/reports', adminReportsRouter)

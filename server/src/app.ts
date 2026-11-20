@@ -79,8 +79,25 @@ export function createApp() {
   // whether a build exists on disk is a more trustworthy signal than an
   // environment variable that may not have arrived.
   if (fs.existsSync(env.clientDistPath)) {
-    app.use(express.static(env.clientDistPath))
+    app.use(
+      express.static(env.clientDistPath, {
+        setHeaders(res, filePath) {
+          const name = path.basename(filePath)
+          if (name === 'index.html') {
+            // Always revalidate the page so a new deploy is picked up at once.
+            res.setHeader('Cache-Control', 'no-cache')
+          } else if (/-[A-Za-z0-9_-]{8}\.(js|css)$/.test(name)) {
+            // Vite build output: the hash changes whenever the content does.
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+          } else {
+            // Unhashed public files (images, fonts, face-detection runtime).
+            res.setHeader('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400')
+          }
+        },
+      }),
+    )
     app.get(/^(?!\/api\/|\/uploads\/).*/, (_req, res) => {
+      res.setHeader('Cache-Control', 'no-cache')
       res.sendFile(path.join(env.clientDistPath, 'index.html'))
     })
   } else if (env.isProduction) {
