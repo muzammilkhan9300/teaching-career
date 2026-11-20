@@ -79,6 +79,20 @@ export function createApp() {
   // whether a build exists on disk is a more trustworthy signal than an
   // environment variable that may not have arrived.
   if (fs.existsSync(env.clientDistPath)) {
+    // Site images have a smaller .webp twin (site/public/assets/images).
+    // Browsers that accept WebP get it from the SAME URL, so every existing
+    // reference — code, CSS and image paths stored in the database — gets the
+    // lighter file without changing anything. The original stays as fallback.
+    const imagesDir = path.join(env.clientDistPath, 'assets', 'images')
+    const hasWebp = (base: string) => fs.existsSync(path.join(imagesDir, `${base}.webp`))
+    app.get(/^\/assets\/images\/([A-Za-z0-9._-]+)\.(jpe?g|png)$/, (req, res, next) => {
+      res.vary('Accept')
+      if (req.accepts('image/webp') && hasWebp(req.params[0])) {
+        req.url = `/assets/images/${req.params[0]}.webp`
+      }
+      next()
+    })
+
     app.use(
       express.static(env.clientDistPath, {
         setHeaders(res, filePath) {

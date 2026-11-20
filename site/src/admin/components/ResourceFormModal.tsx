@@ -4,6 +4,7 @@ import { SpinnerIcon, TrashIcon } from '@/components/icons/admin'
 import { api, ApiError } from '@/lib/api'
 import { parseYouTubeId, youTubeThumbnailUrl } from '@/lib/youtube'
 import { PHOTO_ACCEPT, PhotoCropper, checkPhotoFile } from '@/components/ui/PhotoCropper'
+import { compressForUpload } from '@/lib/compressImage'
 
 export type FieldType =
   | 'text'
@@ -100,17 +101,20 @@ function ImageField({
       setError('Unsupported file type. Please choose a JPG, JPEG, PNG or WEBP image.')
       return
     }
-    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
-      setError(`Image is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). The maximum size is ${MAX_IMAGE_MB}MB.`)
-      return
-    }
-    void upload(file)
+    void upload(file, true)
   }
 
-  async function upload(file: File) {
+  async function upload(picked: File, optimize = false) {
     setUploading(true)
     onUploadingChange(true)
     try {
+      // Large photos are resized and converted to WebP in the browser first,
+      // so the site doesn't serve multi-MB images (lib/compressImage.ts).
+      const file = optimize ? await compressForUpload(picked) : picked
+      if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+        setError(`Image is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). The maximum size is ${MAX_IMAGE_MB}MB.`)
+        return
+      }
       const form = new FormData()
       const target = field.upload ?? { endpoint: '/admin/uploads/image', field: 'homepageImage' }
       form.set(target.field, file)
@@ -164,7 +168,7 @@ function ImageField({
           </button>
         ) : null}
         <span className="text-xs text-body">
-          {portrait ? 'JPG, JPEG, PNG or WEBP. You can crop and position it before saving.' : `JPG, JPEG, PNG or WEBP, max ${MAX_IMAGE_MB}MB.`}
+          {portrait ? 'JPG, JPEG, PNG or WEBP. You can crop and position it before saving.' : 'JPG, JPEG, PNG or WEBP. Large photos are optimized automatically.'}
         </span>
         {error ? <span className="text-xs font-medium text-red-600">{error}</span> : null}
       </div>
