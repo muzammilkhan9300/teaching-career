@@ -23,7 +23,7 @@ export function CandidateCard({ candidate }: { candidate: Candidate }) {
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-tc transition hover:-translate-y-1 hover:shadow-tc-lg">
       {/* Fixed-height band on the brand green; the 3:4 passport photo is shown whole
           (object-fit: contain), centred, with thin green sides on wide cards. */}
-      <div className="h-[220px] w-full overflow-hidden bg-[#064E43]">
+      <div className="h-[190px] w-full overflow-hidden bg-[#064E43]">
         <CandidatePhoto src={candidate.photo} alt={`${candidate.name} — profile photo`} iconSize={48} lazy fit="contain" />
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
