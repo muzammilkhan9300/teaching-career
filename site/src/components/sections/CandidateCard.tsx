@@ -1,24 +1,41 @@
 import { Link } from 'react-router-dom'
 import { CapIcon, CheckCircleIcon, ClockIcon, PersonIcon, PinIcon } from '@/components/icons'
+import { EditIcon } from '@/components/icons/admin'
 import type { Candidate } from '@/types'
 import { CandidatePhoto } from '@/components/ui/CandidatePhoto'
+import { useUserAuth } from '@/auth/UserAuthContext'
+import { useMyCandidateApplication } from '@/lib/queries'
 
 export function CandidateCard({ candidate }: { candidate: Candidate }) {
+  // Same rules as the profile page's Edit button: the owner edits their own
+  // profile, content admins can edit any; everyone else just views it. The
+  // server re-checks permissions on every edit request.
+  const { isAuthenticated, can } = useUserAuth()
+  const { data: myApplication } = useMyCandidateApplication()
+  const isOwner = myApplication?.publishedCandidateId === candidate.id
+  const editTo = isOwner
+    ? '/profile/candidate/edit'
+    : isAuthenticated && can('manageContent')
+      ? `/candidate-profiles/${candidate.id}/edit`
+      : null
+
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-tc transition hover:-translate-y-1 hover:shadow-tc-lg">
-      <div className="relative h-56 w-full overflow-hidden bg-mint">
-        {/* Photo fills the full card width; object-cover crops top-weighted so the face stays in frame. */}
-        <CandidatePhoto src={candidate.photo} alt={`${candidate.name} — profile photo`} iconSize={48} lazy />
-        {candidate.verified ? (
-          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-teal-deep shadow-tc">
-            <CheckCircleIcon size={13} />
-            Verified
-          </span>
-        ) : null}
+      {/* 3:4 frame, the same shape photos are saved in, so the whole passport photo shows uncropped. */}
+      <div className="aspect-[3/4] w-full overflow-hidden bg-[#064E43]">
+        <CandidatePhoto src={candidate.photo} alt={`${candidate.name} — profile photo`} iconSize={48} lazy fit="contain" />
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div>
-          <h3 className="text-lg font-bold text-navy">{candidate.name}</h3>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="min-w-0 break-words text-lg font-bold text-navy">{candidate.name}</h3>
+            {candidate.verified ? (
+              <span className="flex shrink-0 items-center gap-1 rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-teal-deep shadow-tc">
+                <CheckCircleIcon size={13} />
+                Verified
+              </span>
+            ) : null}
+          </div>
           <p className="text-sm font-semibold text-teal-deep">{candidate.role}</p>
         </div>
         <div className="flex flex-col gap-1.5 text-sm text-body">
@@ -43,11 +60,11 @@ export function CandidateCard({ candidate }: { candidate: Candidate }) {
           ))}
         </div>
         <Link
-          to={`/candidate-profiles/${candidate.id}`}
+          to={editTo ?? `/candidate-profiles/${candidate.id}`}
           className="mt-auto inline-flex items-center justify-center gap-2 rounded-full border-2 border-teal px-5 py-2.5 text-sm font-bold text-teal transition hover:bg-mint"
         >
-          <PersonIcon size={15} />
-          View Profile
+          {editTo ? <EditIcon size={15} /> : <PersonIcon size={15} />}
+          {editTo ? 'Edit Profile' : 'View Profile'}
         </Link>
       </div>
     </div>

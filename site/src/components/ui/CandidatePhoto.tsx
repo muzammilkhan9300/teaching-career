@@ -17,6 +17,8 @@ interface CandidatePhotoProps {
   iconSize?: number
   /** Lazy-load (use for lists/cards; not for the main image above the fold). */
   lazy?: boolean
+  /** `contain` shows the whole photo (no cropping) — for frames that already match the 3:4 portrait. */
+  fit?: 'cover' | 'contain'
 }
 
 /**
@@ -25,7 +27,7 @@ interface CandidatePhotoProps {
  * crops with object-fit: cover so nothing is stretched, and falls back to the
  * default person placeholder when there is no photo or it fails to load.
  */
-export function CandidatePhoto({ src, alt, iconSize = 32, lazy = false }: CandidatePhotoProps) {
+export function CandidatePhoto({ src, alt, iconSize = 32, lazy = false, fit = 'cover' }: CandidatePhotoProps) {
   const resolved = src ? getCandidatePhoto(src) : ''
   // Remember which URL failed, so a new photo (e.g. after re-upload) is tried again.
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
@@ -45,8 +47,8 @@ export function CandidatePhoto({ src, alt, iconSize = 32, lazy = false }: Candid
       loading={lazy ? 'lazy' : undefined}
       decoding="async"
       onError={() => setFailedSrc(resolved)}
-      className={clsx('block h-full w-full max-w-none object-cover')}
-      style={{ objectPosition: FACE_POSITION }}
+      className={clsx('block h-full w-full max-w-none', fit === 'contain' ? 'object-contain' : 'object-cover')}
+      style={{ objectPosition: fit === 'contain' ? 'center' : FACE_POSITION }}
     />
   )
 }
