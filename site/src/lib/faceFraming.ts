@@ -8,6 +8,8 @@
  * always gets the final say in the crop editor.
  */
 
+import { sourceSize, type PhotoSource } from './photoEditing'
+
 /** Final portrait size every candidate photo is saved at (3:4). */
 export const PHOTO_WIDTH = 600
 export const PHOTO_HEIGHT = 800
@@ -73,7 +75,7 @@ function clamp(value: number, min: number, max: number) {
 
 // --- Face detection ----------------------------------------------------------
 
-type Detector = { detect: (image: HTMLImageElement) => { detections: { boundingBox?: { originX: number; originY: number; width: number; height: number }; categories: { score: number }[] }[] } }
+type Detector = { detect: (image: PhotoSource) => { detections: { boundingBox?: { originX: number; originY: number; width: number; height: number }; categories: { score: number }[] }[] } }
 let detectorPromise: Promise<Detector> | null = null
 
 function loadDetector(): Promise<Detector> {
@@ -100,17 +102,18 @@ function loadDetector(): Promise<Detector> {
  * image's natural pixel coordinates. Resolves to null when no face is found.
  * Rejects only if the detector itself can't load (e.g. offline).
  */
-export async function detectMainFace(image: HTMLImageElement): Promise<Area | null> {
+export async function detectMainFace(image: PhotoSource): Promise<Area | null> {
   const detector = await loadDetector()
+  const natural = sourceSize(image)
   // The short-range model expects the face to fill a fair part of a small
   // input, so detect on a downscaled copy and map the box back.
   const maxSide = 640
-  const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight))
-  let source: HTMLImageElement = image
+  const scale = Math.min(1, maxSide / Math.max(natural.width, natural.height))
+  let source: PhotoSource = image
   if (scale < 1) {
     const canvas = document.createElement('canvas')
-    canvas.width = Math.round(image.naturalWidth * scale)
-    canvas.height = Math.round(image.naturalHeight * scale)
+    canvas.width = Math.round(natural.width * scale)
+    canvas.height = Math.round(natural.height * scale)
     canvas.getContext('2d')!.drawImage(image, 0, 0, canvas.width, canvas.height)
     source = await loadImage(canvas.toDataURL('image/jpeg', 0.9))
   }
@@ -146,7 +149,7 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
  * photo are filled white. Large sources are halved step by step first so the
  * downscale stays sharp in every browser.
  */
-export function drawCrop(image: HTMLImageElement, area: Area, outWidth: number, outHeight: number): HTMLCanvasElement {
+export function drawCrop(image: PhotoSource, area: Area, outWidth: number, outHeight: number): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
   canvas.width = outWidth
   canvas.height = outHeight
@@ -155,10 +158,11 @@ export function drawCrop(image: HTMLImageElement, area: Area, outWidth: number, 
   ctx.fillRect(0, 0, outWidth, outHeight)
 
   // Only the part of the area that overlaps the photo is drawn.
+  const natural = sourceSize(image)
   const sx = Math.max(0, area.x)
   const sy = Math.max(0, area.y)
-  const sx2 = Math.min(image.naturalWidth, area.x + area.width)
-  const sy2 = Math.min(image.naturalHeight, area.y + area.height)
+  const sx2 = Math.min(natural.width, area.x + area.width)
+  const sy2 = Math.min(natural.height, area.y + area.height)
   if (sx2 <= sx || sy2 <= sy) return canvas
   const k = outWidth / area.width
   const dx = (sx - area.x) * k
@@ -191,7 +195,7 @@ export function drawCrop(image: HTMLImageElement, area: Area, outWidth: number, 
 }
 
 /** The final 600×800 JPEG that gets uploaded and stored. */
-export async function cropToPortraitFile(image: HTMLImageElement, area: Area, originalName: string): Promise<File> {
+export async function cropToPortraitFile(image: PhotoSource, area: Area, originalName: string): Promise<File> {
   const canvas = drawCrop(image, area, PHOTO_WIDTH, PHOTO_HEIGHT)
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.92))
   if (!blob) throw new Error('Could not create the cropped image.')

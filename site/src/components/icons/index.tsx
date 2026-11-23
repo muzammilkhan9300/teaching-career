@@ -35,6 +35,15 @@ import {
   RotateCcw,
   Crosshair,
   ScanFace,
+  RotateCcwSquare,
+  RotateCwSquare,
+  FlipHorizontal2,
+  FlipVertical2,
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ImageUp,
   type LucideProps,
 } from 'lucide-react'
 import { FaInstagram, FaFacebook, FaLinkedin, FaYoutube, FaWhatsapp } from 'react-icons/fa6'
@@ -79,6 +88,15 @@ export const ZoomOutIcon = ZoomOut
 export const ResetIcon = RotateCcw
 export const CrosshairIcon = Crosshair
 export const ScanFaceIcon = ScanFace
+export const RotateLeftIcon = RotateCcwSquare
+export const RotateRightIcon = RotateCwSquare
+export const FlipHorizontalIcon = FlipHorizontal2
+export const FlipVerticalIcon = FlipVertical2
+export const ArrowUpIcon = ArrowUp
+export const ArrowDownIcon = ArrowDown
+export const ArrowLeftIcon = ArrowLeft
+export const ArrowRightIcon = ArrowRight
+export const ImageReplaceIcon = ImageUp
 
 export const WhatsappIcon = fromReactIcon(FaWhatsapp)
 export const InstagramIcon = fromReactIcon(FaInstagram)

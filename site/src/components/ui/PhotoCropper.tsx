@@ -1,26 +1,10 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 // The crop editor (and its face detector) only downloads when someone picks a photo.
 const PhotoCropDialog = lazy(() => import('./PhotoCropDialog').then((m) => ({ default: m.PhotoCropDialog })))
 
-const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
-const PHOTO_EXTS = /\.(jpe?g|png|webp)$/i
-/** The original may be big (phone photos); the saved crop is a small 600×800 JPEG. */
-const MAX_ORIGINAL_MB = 20
-
-export const PHOTO_ACCEPT = '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp'
-
-/** Returns an error message if the picked file can't be opened in the crop editor. */
-export function checkPhotoFile(file: File): string | null {
-  if (!PHOTO_TYPES.includes(file.type) || !PHOTO_EXTS.test(file.name)) {
-    return 'Unsupported file type. Please choose a JPG, JPEG, PNG or WEBP image.'
-  }
-  if (file.size > MAX_ORIGINAL_MB * 1024 * 1024) {
-    return `Image is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). The maximum size is ${MAX_ORIGINAL_MB}MB.`
-  }
-  return null
-}
+export { PHOTO_ACCEPT, checkPhotoFile } from '@/lib/photoFile'
 
 /** Wraps a single file in a FileList, for forms that hold a file input's value. */
 export function fileListOf(file: File): FileList {
@@ -37,7 +21,16 @@ interface PhotoCropperProps {
 }
 
 export function PhotoCropper({ file, onCancel, onConfirm }: PhotoCropperProps) {
-  if (!file) return null
+  // "Replace image" inside the editor swaps the photo without closing it.
+  const [picked, setPicked] = useState(file)
+  const [replacement, setReplacement] = useState<File | null>(null)
+  const fileChanged = picked !== file
+  if (fileChanged) {
+    setPicked(file)
+    setReplacement(null)
+  }
+  const current = fileChanged ? file : (replacement ?? file)
+  if (!current) return null
   return createPortal(
     <Suspense
       fallback={
@@ -46,7 +39,13 @@ export function PhotoCropper({ file, onCancel, onConfirm }: PhotoCropperProps) {
         </div>
       }
     >
-      <PhotoCropDialog key={`${file.name}-${file.size}-${file.lastModified}`} file={file} onCancel={onCancel} onConfirm={onConfirm} />
+      <PhotoCropDialog
+        key={`${current.name}-${current.size}-${current.lastModified}`}
+        file={current}
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+        onReplace={setReplacement}
+      />
     </Suspense>,
     document.body,
   )
